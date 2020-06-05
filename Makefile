@@ -1,27 +1,49 @@
-BIN	= backreste4
-CC	= gcc
-STRIP	= strip
+BINB    = backup.e4
+BINR    = restore.e4
+CC      = gcc
+STRIP   = strip
 
-#ECHO	=
-#OFLAGS	= -g
-ECHO	= @
-OFLAGS	= -O3 -flto
-CFLAGS	= $(OFLAGS) -Wall -fdata-sections -ffunction-sections
-LDFLAGS	= $(OFLAGS) -Wl,--gc-sections -Wl,-Map,$(BIN).map
-LDFLAGS	+= -lsystemd -lm
+DEBUG  ?= 1
+INTEGRATION ?= 0
 
-SRC	= $(wildcard *.c)
-OBJ	= $(SRC:.c=.o)
-DEP	= $(SRC:.c=.d)
+ifeq ($(DEBUG), 1)
+OFLAGS  = -g
+else
+OFLAGS  = -O3 -flto
+endif
 
-all: $(BIN)
+ifeq ($(INTEGRATION),0)
+ECHO    = @
+else
+ECHO    =
+endif
+
+CFLAGS  = $(OFLAGS) -Wall -fdata-sections -ffunction-sections -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+ifeq ($(DEBUG), 0)
+CFLAGS += -DNDEBUG
+endif
+LDFLAGS = $(OFLAGS) -Wl,--gc-sections
+
+INSTALLDIR = /usr/local/bin
+
+SRC     = $(wildcard *.c)
+OBJ     = $(SRC:.c=.o)
+DEP     = $(SRC:.c=.d)
+
+all: $(BINB) $(BINR)
 
 -include $(DEP)
 
-$(BIN): $(OBJ)
+$(BINB): $(OBJ)
 	@echo "$^ -> $@"
 	$(ECHO)$(CC) -o $@ $^ $(LDFLAGS)
+ifeq ($(DEBUG), 0)
 	$(ECHO)$(STRIP) $@
+endif
+
+$(BINR): $(BINB)
+	@echo "$^ -> $@"
+	$(ECHO)ln -s $(BINB) $(BINR)
 
 %.o: %.c
 	@echo "$< -> $@"
@@ -29,10 +51,11 @@ $(BIN): $(OBJ)
 
 .PHONY: clean install
 
-install: $(BIN)
-	-sudo systemctl stop $(BIN).service
-	sudo cp $(BIN) /usr/local/bin
-	-sudo systemctl start $(BIN).service
+install: $(BINB) $(BINR)
+	@echo "$(BINB) -> /usr/local/bin"
+	$(ECHO)sudo cp $(BINB) /usr/local/bin
+	@echo "$(BINR) -> $(INSTALLDIR)"
+	$(ECHO)sudo ln -sf $(INSTALLDIR)/$(BINB) $(INSTALLDIR)/$(BINR)
 
 clean:
-	@rm -f *.o *.d *.map $(BIN)
+	@rm -f *.o *.d *.map $(BINR) $(BINB)

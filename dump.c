@@ -1,164 +1,202 @@
-#define _LARGEFILE64_SOURCE
+/*
+A bare metal backup/restore utility for ext4 file systems
+Copyright (C) 2020  Jean M. Cyr
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
 
-#include "crc32.h"
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "dump.h"
 
-static ext4_super_block_t sb;
-static u16 sb_block_size;
-static u32 sb_blocks_per_group;
-static u64 sb_block_count;
-static u8* group_bm;
-static u8* bm;
-static u8* blk;
-static FILE* part_fh;
-static FILE* dump_fh;
+static u32 part_bm_bytes;
+static u32 group_bm_bytes;
+static u32 blocks_per_group;
+static u32 groups;
+static u16 desc_size;
+static u8 feature_incompat64;
 
+static bm_word_t* group_bm;
 
-static void part_seek(u64 offset, char* emsg)
+static void part_read_group_bm(u64 block, char* emsg)
 {
-    if (fseeko64(part_fh, offset, SEEK_SET) != 0) {
-        fprintf(stderr, "Can't seek for %s  at %016llx\n%s\n", emsg, offset, strerror(errno));
-        exit(-1);
-    }
+    part_seek(block * block_size, emsg);
+    part_read(group_bm, group_bm_bytes, emsg);
 }
 
-static void part_read(void* buffer, u64 size, char* emsg)
+
+static u64 copy_group_to_global_bm(u64 group)
 {
-    if (fread(buffer, size, 1, part_fh) != 1) {
-        fprintf(stderr, "Can't read %s\n%s\n", emsg, strerror(errno));
-        exit(-1);
-    }
-}
+    u64 start = group * blocks_per_group;
+    u64 next = start + blocks_per_group;
+    if (next > block_count - first_block)
+        next = block_count - first_block;
+    next -= start;
 
-static void* part_malloc(u64 size, char* emsg)
-{
-    void* p = malloc(size);
-    if (p == NULL) {
-        fprintf(stderr, "Can't allocate memory for %s\n%s\n", emsg, strerror(errno));
-        exit(-1);
-    }
-    memset(p, 0, size);
-    return p;
-}
-
-static void part_read_group_bm(u64 block)
-{
-    part_seek(block * sb_block_size, "block bitmap");
-    part_read(group_bm, (sb_blocks_per_group + 7) / 8, "block bitmap");
-}
-
-static void part_read_block(u64 block)
-{
-    part_seek(block * sb_block_size, "block");
-    part_read(group_bm, sb_block_size, "block");
-}
-
-static void set_bm(u64 block, u32 value)
-{
-    bm[block / 8] |= (value & 1) << (block % 8);
-}
-
-static u32 get_group_bm(u64 block)
-{
-    return (group_bm[block / 8] >> (block % 8)) & 1;
-}
-
-static u32 get_bm(u64 block)
-{
-    return (bm[block / 8] >> (block % 8)) & 1;
-}
-
-static void copy_group_to_global_bm(u32 group)
-{
-    u64 start_offset = (u64)group * sb_blocks_per_group;
-    u64 next_offset = start_offset + sb_blocks_per_group;
-    if (next_offset > sb_block_count)
-        next_offset = sb_block_count;
-    next_offset -= start_offset;
-    for (u64 block = 0; block < next_offset; block++)
-        set_bm(block + start_offset, get_group_bm(block));
-}
-
-static void dump_write(void *buffer, u64 size, char* emsg)
-{
-    if (fwrite(buffer, size, 1, dump_fh) != 1) {
-        fprintf(stderr, "Can't write dump %s\n%s\n", emsg, strerror(errno));
-        exit(-1);
-    }
-}
-
-void dump(char* part_fn, char* dump_fn)
-{
-    printf("Backing up partition %s to backup file %s\n", part_fn, dump_fn);
-
-    part_fh = fopen(part_fn, "rb");
-    if (part_fh == NULL) {
-        printf("Can't open %s\n%s\n", part_fn, strerror(errno));
-        exit(-1);
-    }
-    dump_fh = fopen(dump_fn, "wb");
-    if (dump_fh == NULL) {
-        printf("Can't open %s\n%s\n", dump_fn, strerror(errno));
-        exit(-1);
-    }
-
-    part_seek(1024, "superblock");
-    part_read(&sb, sizeof(sb), "superblock");
-
-    if (sb.s_magic != 0xEF53) {
-        fprintf(stderr, "Can't find superblock\n");
-        exit(-1);
-    }
-    if (sb.s_checksum_type == 1) {
-        if (update_crc(-1, (u8*)&sb, sizeof(sb) - sizeof(sb.s_checksum)) != sb.s_checksum) {
-            fprintf(stderr, "Superblock bad checksum\n");
-            exit(-1);
+    u64 cnt = 0;
+    for (u64 block = 0; block < next; block++)
+        if (get_bm_bit(group_bm, block))
+        {
+            set_bm_bit(part_bm, start + block + first_block);
+            cnt++;
         }
+
+    return cnt;
+}
+
+static void load_superblock(void)
+{
+    ext4_super_block_t* super =
+        common_malloc(sizeof(ext4_super_block_t), "super block");
+
+    print("Backing up partition %s\n", part_fn);
+
+    // Fake values for now
+    block_count = 2;
+    block_size = 1024;
+
+    part_seek(1024, "super block");
+    part_read(super, sizeof(*super), "super block");
+
+    if (le16_to_cpu(super->s_magic) != 0xEF53)
+        error("Can't find super block\n");
+
+    if ((le16_to_cpu(super->s_state) & 1) == 0)
+        error("%s was not cleanly unmounted. try\n  sudo e2fsck -f %s\n",
+            part_fn, part_fn);
+
+    block_size = 1024u << le32_to_cpu(super->s_log_block_size);
+    assert(block_size <= 64 * 1024);
+    blocks_per_group = le32_to_cpu(super->s_blocks_per_group);
+
+    feature_incompat64 =
+        (super->s_feature_incompat & le32_to_cpu(INCOMPAT_64BIT)) ==
+        le32_to_cpu(INCOMPAT_64BIT);
+    block_count = le32_to_cpu(super->s_blocks_count_lo);
+    if (!feature_incompat64)
+        block_count |= (u64)le32_to_cpu(super->s_blocks_count_hi) << 32;
+
+    part_bm_bytes = (u32)((block_count + 7) / 8);
+    assert((blocks_per_group % 8) == 0);
+    group_bm_bytes = blocks_per_group / 8;
+    groups = (u32)((block_count + blocks_per_group - 1) / blocks_per_group);
+    desc_size = le16_to_cpu(super->s_desc_size);
+    if (!feature_incompat64)
+        desc_size = EXT4_MIN_DESC_SIZE;
+    assert((desc_size == EXT4_MIN_DESC_SIZE) ||
+           (desc_size == EXT4_MIN_DESC_SIZE_64BIT));
+
+    first_block = le32_to_cpu(super->s_first_data_block);
+
+    free(super);
+}
+
+static u64 load_block_group_bitmaps(void)
+{
+    assert(block_size <= 64 * 1024);
+    u32 gd_offset = block_size;
+    if (block_size == 1024)
+        gd_offset += 1024;
+
+    print("Scanning block groups\n");
+
+    ext4_group_desc_t* gds =
+        common_malloc(groups * desc_size, "group descriptors");
+    ext4_group_desc_t* gd = gds;
+
+    part_seek(gd_offset, "group descriptors");
+    part_read(gds, groups * desc_size, "group descriptors");
+    u64 cnt = 0;
+    for (u32 group = 0; group < groups; group++)
+    {
+        u64 block_bitmap = le32_to_cpu(gd->bg_block_bitmap_lo);
+        if (desc_size > 32)
+            block_bitmap |= (u64)le32_to_cpu(gd->bg_block_bitmap_hi) << 32;
+        assert(block_bitmap < block_count);
+        part_read_group_bm(block_bitmap, "block bitmap");
+        cnt += copy_group_to_global_bm(group);
+        gd = (ext4_group_desc_t*)((char*)gd + desc_size);
     }
-    sb_block_size = 1024u << sb.s_log_block_size;
-    sb_blocks_per_group = sb.s_blocks_per_group;
-    sb_block_count = sb.s_blocks_count_lo;
-    if ((sb.s_feature_incompat & INCOMPAT_64BIT) == 0)
-        sb_block_count |= (u64)sb.s_blocks_count_hi << 32;
-    u32 groups = (u32)((sb_block_count + sb_blocks_per_group - 1) / sb_blocks_per_group);
 
-    printf("Block size %d, blocks per group %d, blocks %lld, block groups %d\n", sb_block_size, sb_blocks_per_group, sb_block_count, groups);
+    free(gds);
 
-    bm = part_malloc((sb_block_count + 7) / 8, "global bitmap");
-    group_bm = part_malloc((sb_blocks_per_group + 7) / 8, "group bitmap");
-    blk = part_malloc(sb_block_size, "block");
+    return cnt;
+}
 
-    printf("Scanning block groups\n");
-    for (u32 i = 0; i < groups; i++) {
-        ext4_group_desc_t gd;
-        part_seek(sb_block_size + i * sizeof(gd), "group descriptors");
-        part_read(&gd, sizeof(gd), "group descriptor");
-        part_read_group_bm(gd.bg_block_bitmap_lo);
-        copy_group_to_global_bm(i);
-    }
+static void save_backup(void)
+{
+    print("Writing header\n");
 
-    printf("Writing partition bitmap\n");
-    u64 bm_size = (sb_block_count + 7) / 8;
-    dump_write(&bm_size, sizeof(bm_size), "bitmap length");
-    dump_write(bm, bm_size, "bitmap");
-    printf("Writing data blocks\n");
+    hdr.blocks = block_count;
+    hdr.block_size = block_size;
+    hdr.magic = 0xe4bae4ba;
+    strcpy((char*)&hdr.version, BACKUP_E4_VERSION);
+
+    dump_write(&hdr, sizeof(hdr), "header");
+
+    print("Writing partition bitmap\n");
+
+    dump_write(part_bm, part_bm_bytes, "bitmap");
+
+    print("Writing data blocks\n");
+
     u64 block_cnt = 0;
-    for (u64 block = 0; block < sb_block_count; block++)
-        if (get_bm(block)) {
-            part_read_block(block);
-            dump_write(blk, sb_block_size, "block");
-            block_cnt++;
+
+    for (u64 block = 0; block < block_count; block++)
+    {
+        if (get_bm_bit(part_bm, block))
+        {
+            part_read_block(block, "data block");
+            dump_write(blk, block_size, "block");
+            if ((block_cnt++ & 32767) == 0)
+                print(".");
         }
-    printf("%lld blocks dumped\n", block_cnt);
-    fclose(dump_fh);
-    fclose(part_fh);
-    free(group_bm);
-    free(bm);
-    free(blk);
+    }
+
+    print("\n%'lld blocks dumped (%'lld bytes)\n", block_cnt,
+        block_cnt * block_size);
 }
 
+void dump(void)
+{
+    part_open(READ);
+
+    load_superblock();
+
+    print(
+        "%'d bytes per block, %'d blocks per group, %'lld blocks, %'d groups\n"
+        "  %'d bytes per descriptor\n",
+        block_size, blocks_per_group, block_count, groups, desc_size);
+
+    part_bm = common_malloc(part_bm_bytes, "partition bitmap");
+    memset(part_bm, 0, part_bm_bytes);
+    group_bm = common_malloc(group_bm_bytes, "group bitmap");
+    blk = common_malloc(block_size, "block");
+
+    u64 cnt = load_block_group_bitmaps();
+
+    if (!get_bm_bit(part_bm, 0))
+    {
+        set_bm_bit(part_bm, 0);
+        cnt++;
+    }
+
+    print("  %'lld blocks in use\n", cnt);
+
+    dump_open(WRITE);
+
+    save_backup();
+
+    free(blk);
+    free(group_bm);
+    free(part_bm);
+}
