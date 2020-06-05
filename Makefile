@@ -1,4 +1,4 @@
-BIN	= backreste4
+BIN	= backrest.extfs
 CC	= gcc
 STRIP	= strip
 
@@ -6,9 +6,9 @@ STRIP	= strip
 #OFLAGS	= -g
 ECHO	= @
 OFLAGS	= -O3 -flto
-CFLAGS	= $(OFLAGS) -Wall -fdata-sections -ffunction-sections
+CFLAGS	= $(OFLAGS) -Wall -fdata-sections -ffunction-sections -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 LDFLAGS	= $(OFLAGS) -Wl,--gc-sections -Wl,-Map,$(BIN).map
-LDFLAGS	+= -lsystemd -lm
+LDFLAGS	+= -lz
 
 SRC	= $(wildcard *.c)
 OBJ	= $(SRC:.c=.o)
@@ -30,9 +30,7 @@ $(BIN): $(OBJ)
 .PHONY: clean install
 
 install: $(BIN)
-	-sudo systemctl stop $(BIN).service
 	sudo cp $(BIN) /usr/local/bin
-	-sudo systemctl start $(BIN).service
 
 clean:
 	@rm -f *.o *.d *.map $(BIN)
