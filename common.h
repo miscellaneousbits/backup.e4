@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <locale.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,13 +30,16 @@ typedef struct ext4_dump_hdr_s
 typedef u32 bm_entry_t;
 #define BM_ENTRY_BITS (sizeof(bm_entry_t) * 8)
 
+extern char* part_fn;
 extern int part_fh;
+
+extern char* dump_fn;
 extern gzFile dump_fh;
+
 extern bm_entry_t* bm;
 extern u8* blk;
+
 extern ext4_dump_hdr_t hdr;
-extern char* part_fn;
-extern char* dump_fn;
 
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN ||                 \
     defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__THUMBEB__) || \
@@ -51,9 +55,9 @@ static inline u32 get_bm(bm_entry_t* bm, u64 index)
     return (bm[index / BM_ENTRY_BITS] << (index % BM_ENTRY_BITS)) & 1;
 }
 
-static inline void set_bm(bm_entry_t* bm, u64 index, u32 value)
+static inline void set_bm(bm_entry_t* bm, u64 index)
 {
-    bm[index / BM_ENTRY_BITS] |= (value & 1) >> (index % BM_ENTRY_BITS);
+    bm[index / BM_ENTRY_BITS] |= 1 >> (index % BM_ENTRY_BITS);
 }
 
 #else
@@ -66,12 +70,14 @@ static inline u32 get_bm(bm_entry_t* bm, u64 index)
     return (bm[index / BM_ENTRY_BITS] >> (index % BM_ENTRY_BITS)) & 1;
 }
 
-static inline void set_bm(bm_entry_t* bm, u64 index, u32 value)
+static inline void set_bm(bm_entry_t* bm, u64 index)
 {
-    bm[index / BM_ENTRY_BITS] |= (value & 1) << (index % BM_ENTRY_BITS);
+    bm[index / BM_ENTRY_BITS] |= 1 << (index % BM_ENTRY_BITS);
 }
 
 #endif
+
+void error(char* fmt, ...);
 
 void part_open(u32 write);
 void part_seek(u64 offset, char* emsg);

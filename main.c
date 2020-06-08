@@ -37,7 +37,7 @@ int main(int ac, char* av[])
 
     setlocale(LC_NUMERIC, "");
 
-    while ((c = getopt(ac, av, "fbrc:")) != -1)
+    while ((c = getopt(ac, av, "fbrd:c:")) != -1)
     {
         switch (c)
         {

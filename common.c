@@ -1,9 +1,7 @@
 
 #include "common.h"
 
-#include <stdarg.h>
-
-static void error(char* fmt, ...)
+void error(char* fmt, ...)
 {
     fprintf(stderr, "\n");
     va_list args;

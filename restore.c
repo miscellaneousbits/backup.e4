@@ -18,10 +18,7 @@ void restore(void)
     printf("Reading header\n");
     dump_read(&hdr, sizeof(hdr), "header");
     if (hdr.magic != 0xe4bae4ba)
-    {
-        fprintf(stderr, "Not dump file\n");
-        exit(-1);
-    }
+        error("Not dump file\n");
 
     printf("Bytes per block %'d, %'lld blocks\n", hdr.block_size, hdr.blocks);
 
@@ -33,7 +30,7 @@ void restore(void)
     u64 cnt = 0;
     for (u64 block = 0; block < hdr.blocks; block++)
         cnt += get_bm(bm, block);
-    printf("  %'lld in-use blocks\n", cnt);
+    printf("  %'lld blocks in use\n", cnt);
 
     part_open(1);
 
@@ -52,8 +49,8 @@ void restore(void)
             }
         }
     }
-    printf("\n%'lld in-use blocks restored (%'lld bytes)\n", cnt,
-        cnt * hdr.block_size);
+    printf(
+        "\n%'lld blocks restored (%'lld bytes)\n", cnt, cnt * hdr.block_size);
     part_close();
     dump_close();
     free(bm);
