@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-void dump(u8 comp);
+void dump(u8 comp, u8 force);
 
 typedef struct ext4_super_block_s
 {
@@ -99,7 +99,6 @@ typedef struct ext4_super_block_s
                                         snapshot's future use */
     u32 s_snapshot_list;           /* inode number of the head of the
                                               on-disk snapshot list */
-#define EXT4_S_ERR_START offsetof(struct ext4_super_block, s_error_count)
     u32 s_error_count;         /* number of fs errors */
     u32 s_first_error_time;    /* first time an error happened */
     u32 s_first_error_ino;     /* inode involved in first error */
@@ -111,7 +110,6 @@ typedef struct ext4_super_block_s
     u32 s_last_error_line;     /* line number where error happened */
     u64 s_last_error_block;    /* block involved of last error */
     u8 s_last_error_func[32];  /* function where the error happened */
-#define EXT4_S_ERR_END offsetof(struct ext4_super_block, s_mount_opts)
     u8 s_mount_opts[64];
     u32 s_usr_quota_inum;     /* inode for tracking user quota */
     u32 s_grp_quota_inum;     /* inode for tracking group quota */
