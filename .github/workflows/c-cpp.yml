@@ -15,3 +15,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: make
       run: make
+    - name: verify
+      run: backup.e4 -h
+      run: restore.e4 -h
