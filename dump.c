@@ -1,7 +1,22 @@
+/*
+A bare metal backup/restore utility for ext4 file systems
+Copyright (C) 2020  Jean M. Cyr
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include "dump.h"
-
-#include "common.h"
 
 static u16 block_size;
 static u32 blocks_per_group;
@@ -47,10 +62,8 @@ void dump(u8 comp)
 {
     ext4_super_block_t sb;
 
-    fprintf(stderr,
-        "Backing up partition %s to backup file %s\n  with compression level "
-        "%d\n",
-        part_fn, dump_fn ? dump_fn : "stdout", comp);
+    fprintf(stderr, "Backing up partition %s to backup file %s\n", part_fn,
+        dump_fn ? dump_fn : "stdout");
 
     part_open(0);
 
@@ -98,7 +111,7 @@ void dump(u8 comp)
         gd_size = EXT4_MIN_DESC_SIZE;
 
     fprintf(
-        stderr, "Scanning block groups\n  Descriptor size %d bytes\n", gd_size);
+        stderr, "Scanning block groups\n");
     char* gds = common_malloc(groups * gd_size, "group descriptors");
     char* gds_save = gds;
     part_seek(gd_offset, "group descriptors");
@@ -148,11 +161,19 @@ void dump(u8 comp)
     u64 comp_bytes = dump_flush();
     dump_close();
     part_close();
-    fprintf(stderr,
-        "\n%'lld blocks dumped (%'lld bytes, compressed to %'lld "
-        "bytes)\n  Compression ratio %d%%\n",
-        block_cnt, block_cnt * block_size, comp_bytes,
-        (u32)(100 - (comp_bytes * 100) / (block_cnt * block_size)));
+    if (comp && dump_fn)
+    {
+        fprintf(stderr,
+            "\n%'lld blocks dumped (%'lld bytes, compressed to %'lld "
+            "bytes)\n  Compression ratio %d%%\n",
+            block_cnt, block_cnt * block_size, comp_bytes,
+            (u32)(100 - (comp_bytes * 100) / (block_cnt * block_size)));
+    }
+    else
+    {
+        fprintf(stderr, "\n%'lld blocks dumped (%'lld bytes)\n", block_cnt,
+            comp_bytes);
+    }
     free(group_bm);
     free(bm);
     free(blk);
