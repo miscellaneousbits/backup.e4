@@ -137,7 +137,7 @@ void dump(u8 comp)
     hdr.blocks = block_count;
     hdr.block_size = block_size;
     hdr.magic = 0xe4bae4ba;
-    hdr.version = 0;
+    strcpy((char*)&hdr.version, BACKUP_E4_VERSION);
     dump_write(&hdr, sizeof(hdr), "header");
 
     fprintf(stderr, "Writing partition bitmap\n");
