@@ -62,7 +62,6 @@ void dump(u8 comp, u8 force)
     if ((le16_to_cpu(sb.s_state) & 1) == 0)
         error("%s was not cleanly unmounted. try\n  sudo e2fsck -f %s\n",
             part_fn, part_fn);
-
     block_size = 1024u << le32_to_cpu(sb.s_log_block_size);
     blocks_per_group = le32_to_cpu(sb.s_blocks_per_group);
     block_count = le32_to_cpu(sb.s_blocks_count_lo);
@@ -83,27 +82,37 @@ void dump(u8 comp, u8 force)
 
     set_bm(bm, 0);
 
-    printf("Scanning block groups\n");
     u32 gd_offset = block_size;
     if (block_size == 1024)
         gd_offset += 1024;
 
-    ext4_group_desc_t* gd =
-        common_malloc(groups * sizeof(ext4_group_desc_t), "group descriptors");
+    u32 gd_size = offsetof(struct ext4_group_desc_s, bg_checksum);
+    ;
+    if (le32_to_cpu(sb.s_feature_incompat) & INCOMPAT_64BIT)
+    {
+        if (gd_size < EXT4_MIN_DESC_SIZE_64BIT)
+            gd_size = EXT4_MIN_DESC_SIZE_64BIT;
+    }
+    else
+        gd_size = EXT4_MIN_DESC_SIZE;
+
+    printf("Scanning block groups\n  Descriptor size %d bytes\n", gd_size);
+    char* gds = common_malloc(groups * gd_size, "group descriptors");
+    char* gds_save = gds;
     part_seek(gd_offset, "group descriptors");
-    part_read(gd, groups * sizeof(ext4_group_desc_t), "group descriptors");
+    part_read(gds, groups * gd_size, "group descriptors");
     u64 cnt = 0;
     for (u64 group = 0; group < groups; group++)
     {
-        u64 block_bitmap = le32_to_cpu(gd[group].bg_block_bitmap_lo);
-        if (((le32_to_cpu(sb.s_feature_incompat) & INCOMPAT_64BIT) == 0) &&
-            (le16_to_cpu(sb.s_desc_size) > 32))
-            block_bitmap |= (u64)le32_to_cpu(gd[group].bg_block_bitmap_hi)
-                            << 32;
+        ext4_group_desc_t* gd = (ext4_group_desc_t*)gds;
+        u64 block_bitmap = le32_to_cpu(gd->bg_block_bitmap_lo);
+        if (gd_size > 32)
+            block_bitmap |= (u64)le32_to_cpu(gd->bg_block_bitmap_hi) << 32;
         part_read_group_bm(block_bitmap);
         cnt += copy_group_to_global_bm(group);
+        gds += gd_size;
     }
-    free(gd);
+    free(gds_save);
     if (force && !get_bm(bm, block_count - 1))
     {
         set_bm(bm, block_count - 1);

@@ -11,73 +11,102 @@ ext4_dump_hdr_t hdr;
 char* part_fn = NULL;
 char* dump_fn = NULL;
 
+u8 b_flag = 1;
+
 static void help(char* prog)
 {
-    printf(
-        "Usage: %s [-c n] [-b] [-r] extfs_partition [dump_file]\n"
-        "    -c n            where n is the compression level (1 low to 9 "
-        "high, default 1)\n"
-        "    -b              backup extfs partition to dump file (default)\n"
-        "    -r              restore dump file to extfs partition\n"
-        "    -f              Force dump of last block in partition\n"
-        "    extfs_partition Partition file name\n"
-        "    dump_file       Dump file name. If omitted will use stdin or "
-        "stdout\n",
-        prog);
+    if (b_flag)
+        printf(
+            "Usage: %s [-c n] [-f] extfs_partition dump_file\n"
+            "    -c n            where n is the compression level (1 low to 9 "
+            "high, default 1)\n"
+            "    -f              Force dump of last block in partition\n"
+            "    extfs_partition Partition file name\n"
+            "    dump_file       Dump file name.\n",
+            prog);
+    else
+        printf(
+            "Usage: %s dump_file extfs_partition\n"
+            "    dump_file       Dump file name.\n"
+            "    extfs_partition Partition file name\n",
+            prog);
     exit(-1);
 }
 
 int main(int ac, char* av[])
 {
-    u8 b_flag = 1;
     u8 c_flag = 1;
     u8 f_flag = 0;
-    opterr = 0;
-    int c;
+
+    char* who = strrchr(av[0], '/');
+    if (who)
+        who++;
+    else
+        who = av[0];
+    if (strcmp(who, "restore.e4") == 0)
+        b_flag = 0;
 
     setlocale(LC_NUMERIC, "");
 
-    while ((c = getopt(ac, av, "fbrd:c:")) != -1)
+    if (b_flag)
     {
-        switch (c)
+        opterr = 0;
+        int c;
+
+        while ((c = getopt(ac, av, "fbrd:c:")) != -1)
         {
-        case 'b':
-            // b_flag = 1;
-            break;
-        case 'r':
-            b_flag = 0;
-            break;
-        case 'f':
-            f_flag = 1;
-            break;
-        case 'c':
-            if ((strlen(optarg) > 1) || (optarg[0] < '1') || (optarg[0] > '9'))
+            switch (c)
             {
-                fprintf(stderr, "Compression level must be between 1 and 9\n");
+            case 'f':
+                f_flag = 1;
+                break;
+            case 'c':
+                if ((strlen(optarg) > 1) || (optarg[0] < '1') ||
+                    (optarg[0] > '9'))
+                {
+                    fprintf(
+                        stderr, "Compression level must be between 1 and 9\n");
+                    help(av[0]);
+                }
+                c_flag = optarg[0] - '0';
+                break;
+            case '?':
+                if (optopt == 'c')
+                    fprintf(stderr, "Option -c requires an argument.\n");
+                else if (isprint(optopt))
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                else
+                    fprintf(
+                        stderr, "Unknown option character `\\x%x'\n", optopt);
+            default:
                 help(av[0]);
             }
-            c_flag = optarg[0] - '0';
-            break;
-        case '?':
-            if (optopt == 'c')
-                fprintf(stderr, "Option -c requires an argument.\n");
-            else if (isprint(optopt))
-                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-            else
-                fprintf(stderr, "Unknown option character `\\x%x'\n", optopt);
-        default:
-            help(av[0]);
         }
     }
+    else
+        optind = 1;
 
     for (int i = optind; i < ac; i++)
     {
-        if (part_fn == NULL)
-            part_fn = av[i];
-        else if (dump_fn == NULL)
+        if (b_flag)
         {
-            dump_fn = av[i];
-            break;
+            if (part_fn == NULL)
+                part_fn = av[i];
+            else if (dump_fn == NULL)
+            {
+                dump_fn = av[i];
+                break;
+            }
+        }
+        else
+        {
+            if (dump_fn == NULL)
+                dump_fn = av[i];
+            else if (part_fn == NULL)
+            {
+                part_fn = av[i];
+                break;
+            }
         }
     }
 

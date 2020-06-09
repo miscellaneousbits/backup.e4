@@ -124,6 +124,9 @@ typedef struct ext4_super_block_s
     u32 s_checksum;           /* crc32c(superblock) */
 } ext4_super_block_t;
 
+#define EXT4_MIN_DESC_SIZE 32
+#define EXT4_MIN_DESC_SIZE_64BIT 64
+
 typedef struct ext4_group_desc_s
 {
     u32 bg_block_bitmap_lo;      /* Blocks bitmap block */

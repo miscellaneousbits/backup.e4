@@ -1,4 +1,5 @@
-BIN	= backrest.extfs
+BINB	= backup.e4
+BINR	= restore.e4
 CC	= gcc
 STRIP	= strip
 
@@ -7,21 +8,25 @@ STRIP	= strip
 ECHO	= @
 OFLAGS	= -O3 -flto
 CFLAGS	= $(OFLAGS) -Wall -fdata-sections -ffunction-sections -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
-LDFLAGS	= $(OFLAGS) -Wl,--gc-sections -Wl,-Map,$(BIN).map
+LDFLAGS	= $(OFLAGS) -Wl,--gc-sections
 LDFLAGS	+= -lz
 
 SRC	= $(wildcard *.c)
 OBJ	= $(SRC:.c=.o)
 DEP	= $(SRC:.c=.d)
 
-all: $(BIN)
+all: $(BINB) $(BINR)
 
 -include $(DEP)
 
-$(BIN): $(OBJ)
+$(BINB): $(OBJ)
 	@echo "$^ -> $@"
 	$(ECHO)$(CC) -o $@ $^ $(LDFLAGS)
 	$(ECHO)$(STRIP) $@
+
+$(BINR): $(BINB)
+	@echo "$^ -> $@"
+	$(ECHO)ln -s $(BINB) $(BINR)
 
 %.o: %.c
 	@echo "$< -> $@"
@@ -29,8 +34,11 @@ $(BIN): $(OBJ)
 
 .PHONY: clean install
 
-install: $(BIN)
-	sudo cp $(BIN) /usr/local/bin
+install: $(BINB) $(BINR)
+	@echo "$(BINB) -> /usr/local/bin"
+	$(ECHO)sudo cp $(BINB) /usr/local/bin
+	@echo "$(BINR) -> /usr/local/bin"
+	$(ECHO)sudo ln -sf /usr/local/bin/$(BINB) /usr/local/bin/$(BINR)
 
 clean:
-	@rm -f *.o *.d *.map $(BIN)
+	@rm -f *.o *.d *.map $(BINR) $(BINB)
