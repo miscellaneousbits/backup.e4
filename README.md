@@ -243,7 +243,7 @@ By default this will install to /usr/local/bin. If this is not suitable change t
 
 ## Security alert
 
-Like any bare metal backup utility **backup.e4** copies file system data verbatim. It will therefore likely contain unencrypted password and private key data. Backup dumps must remain secured at all times. Alternatively the backups should be encrypted.
+Like any bare metal backup utility **backup.e4** copies file system data verbatim. Dump files will therefore likely contain unencrypted password and private key data. Backup dumps must remain secured at all times. Alternatively the backups should be encrypted.
 
 ## Workflow build status
 
