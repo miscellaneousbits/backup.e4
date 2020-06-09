@@ -50,12 +50,18 @@ void part_close(void)
 void dump_open(u32 comp, u32 write)
 {
     char mode[4] = {'r', 'b', 0, 0};
+    int f = fileno(stdin);
     if (write)
     {
         mode[0] = 'w';
         mode[2] = '0' + comp;
+        f = fileno(stdout);
     }
-    dump_fh = gzopen64(dump_fn, mode);
+    if (dump_fn)
+        dump_fh = gzopen64(dump_fn, mode);
+    else
+        dump_fh = gzdopen(f, mode);
+
     if (dump_fh == Z_NULL)
         error("Can't open dump file\n%s\n", gzerror(dump_fh, &errno));
 }
