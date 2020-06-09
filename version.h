@@ -1,0 +1,1 @@
+#define BACKUP_E4_VERSION "0.9"

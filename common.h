@@ -18,7 +18,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#define BACKUP_E4_VERSION "0.9"
+#include "version.h"
 
 #include <ctype.h>
 #include <errno.h>
