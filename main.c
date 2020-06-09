@@ -44,7 +44,7 @@ static void help(char* prog)
             "    dump_file       Dump file name. Use stdin if omitted\n"
             "    extfs_partition Partition file name\n\n",
             prog);
-    exit(-1);
+    exit(0);
 }
 
 int main(int ac, char* av[])
