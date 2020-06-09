@@ -12,12 +12,12 @@
 ## Table of Contents
 
 * [Usage](#usage)
-	* [Using pipes](#pipes)
-* [Building from source](#building)
+	* [Using pipes](#using-pipes)
+* [Building from source](#building-from-source)
 	* [Requirements](#requirements)
 	* [Build](#build)
 	* [Install](#install)
-* [Security alert](#security)
+* [Security alert](#security-alert)
 
 ## Usage
 
