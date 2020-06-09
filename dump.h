@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-void dump(u8 comp, u8 force);
+void dump(u8 comp);
 
 typedef struct ext4_super_block_s
 {

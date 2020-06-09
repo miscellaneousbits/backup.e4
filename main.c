@@ -17,26 +17,23 @@ static void help(char* prog)
 {
     if (b_flag)
         fprintf(stderr,
-            "Usage: %s [-c n] [-f] extfs_partition [dump_file]\n"
-            "    -c n            where n is the compression level (1 low to 9 "
-            "high, default 1)\n"
-            "    -f              Force dump of last block in partition\n"
+            "\nUsage: %s [-c] extfs_partition [dump_file]\n"
+            "    -c              Compress the dump file\n"
             "    extfs_partition Partition file name\n"
-            "    dump_file       Dump file name. Use stdout if omitted.\n",
+            "    dump_file       Dump file name. Use stdout if omitted.\n\n",
             prog);
     else
         fprintf(stderr,
-            "Usage: %s [dump_file] extfs_partition\n"
+            "\nUsage: %s [dump_file] extfs_partition\n"
             "    dump_file       Dump file name. Use stdin if omitted\n"
-            "    extfs_partition Partition file name\n",
+            "    extfs_partition Partition file name\n\n",
             prog);
     exit(-1);
 }
 
 int main(int ac, char* av[])
 {
-    u8 c_flag = 1;
-    u8 f_flag = 0;
+    u8 c_flag = 0;
 
     setlocale(LC_NUMERIC, "");
 
@@ -50,7 +47,7 @@ int main(int ac, char* av[])
 
     char* options = "h";
     if (b_flag)
-        options = "hfc:";
+        options = "hc";
 
     opterr = 0;
     int c;
@@ -59,16 +56,8 @@ int main(int ac, char* av[])
     {
         switch (c)
         {
-        case 'f':
-            f_flag = 1;
-            break;
         case 'c':
-            if ((strlen(optarg) > 1) || (optarg[0] < '1') || (optarg[0] > '9'))
-            {
-                fprintf(stderr, "Compression level must be between 1 and 9\n");
-                help(av[0]);
-            }
-            c_flag = optarg[0] - '0';
+            c_flag = 1;
             break;
         case '?':
             if (optopt == 'c')
@@ -125,7 +114,7 @@ int main(int ac, char* av[])
 
     time_t start_time = time(NULL);
 
-    b_flag ? dump(c_flag, f_flag) : restore();
+    b_flag ? dump(c_flag) : restore();
 
     time_t elapsed = time(NULL) - start_time;
     u32 s = elapsed % 60;
