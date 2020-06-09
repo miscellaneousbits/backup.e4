@@ -18,6 +18,7 @@
 	* [Build](#build)
 	* [Install](#install)
 * [Security alert](#security-alert)
+* [Integration build status](#integration-build-status)
 
 ## Usage
 
@@ -245,6 +246,6 @@ By default this will install to /usr/local/bin. If this is not suitable change t
 
 Like any bare metal backup utility **backup.e4** copies file system data verbatim. Dump files will therefore likely contain unencrypted password and private key data. Backup dumps must remain secured at all times. Alternatively the backups should be encrypted.
 
-## Workflow build status
+## Integration build status
 
 ![C/C++ CI](https://github.com/miscellaneousbits/backup.e4/workflows/C/C++%20CI/badge.svg)
