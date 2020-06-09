@@ -33,14 +33,16 @@ static void help(char* prog)
 {
     if (b_flag)
         fprintf(stderr,
-            "\nUsage: %s [-c] extfs_partition [dump_file]\n"
+            "\nUsage: %s [-v] [-c] extfs_partition [dump_file]\n"
             "    -c              Compress the dump file\n"
+            "    -v              Show version\n"
             "    extfs_partition Partition file name\n"
             "    dump_file       Dump file name. Use stdout if omitted.\n\n",
             prog);
     else
         fprintf(stderr,
-            "\nUsage: %s [dump_file] extfs_partition\n"
+            "\nUsage: %s [-v] [dump_file] extfs_partition\n"
+            "    -v              Show version\n"
             "    dump_file       Dump file name. Use stdin if omitted\n"
             "    extfs_partition Partition file name\n\n",
             prog);
@@ -61,9 +63,9 @@ int main(int ac, char* av[])
     if (strcmp(who, "restore.e4") == 0)
         b_flag = 0;
 
-    char* options = "h";
+    char* options = "hv";
     if (b_flag)
-        options = "hc";
+        options = "hvc";
 
     opterr = 0;
     int c;
@@ -72,6 +74,9 @@ int main(int ac, char* av[])
     {
         switch (c)
         {
+        case 'v':
+            fprintf(stderr, "Version %s\n", BACKUP_E4_VERSION);
+            return 0;
         case 'c':
             c_flag = 1;
             break;
