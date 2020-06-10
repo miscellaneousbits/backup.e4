@@ -8,7 +8,7 @@ STRIP   = strip
 ECHO    = @
 OFLAGS  = -O3 -flto
 CFLAGS  = $(OFLAGS) -Wall -fdata-sections -ffunction-sections -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
-LDFLAGS = $(OFLAGS) -Wl,--gc-sections -lz
+LDFLAGS = $(OFLAGS) -Wl,--gc-sections -static -lz
 
 INSTALLDIR = /usr/local/bin
 
