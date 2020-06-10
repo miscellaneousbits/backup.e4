@@ -1,6 +1,6 @@
 # backup.e4 (bare metal backup/restore for est4 file systems)
 
-**backup.e4** is a bare metal backup and restore utility for common Linux ext file systems. It can produce a sector by sector backup image of any ext4 file system which can be later restore to any partition of equal to or greater size.
+**backup.e4** is a bare metal backup and restore utility for common Linux ext file systems. It can produce a sector by sector backup image of any ext4 file system which can be later restored to any partition of equal to or greater size.
 
 ## Features
 
@@ -26,7 +26,7 @@
 **backup.e4** has a few simple command line parameters.
 
 
-```sh
+```
 pi@raspberrypi:~ $ backup.e4 -h
 
 Usage: backup.e4 [-c] extfs_partition [dump_file]
@@ -48,7 +48,7 @@ Note: Using the -h option or no options at all will display help.
 Let's backup a file system on partition /dev/sda3.
 
 
-```sh
+```
 pi@raspberrypi:~ $ sudo backup.e4 /dev/sda3 sda3_backup
 Backing up partition /dev/sda3 to backup file sda3_backup.bgz
 
@@ -74,7 +74,7 @@ pi@raspberrypi:~ $ # Better!
 Or, we can request compression.
 
 
-```sh
+```
 pi@raspberrypi:~ $ sudo backup.e4 -c /dev/sda3 sda3_backup_compressed.bgz
 Backing up partition /dev/sda3 to backup file sda3_backup_compressed.bgz
 4,096 bytes per block, 32,768 blocks per group, 52,428,000 blocks, 1,600 groups
@@ -93,7 +93,7 @@ pi@raspberrypi:~ $
 Note: If the dump file name doesn't have an extension '.bgz' will automatically be appended.
 
 
-```sh
+```
 pi@raspberrypi:~ $ ls -alh sda3_backup*
 -rw-r--r-- 1 root root 4.7G Jun  9 17:56 sda3_backup.bgz
 -rw-r--r-- 1 root root 648M Jun  9 17:59 sda3_backup_compressed.bgz
@@ -105,7 +105,7 @@ Compression is slower but reduces dump file size.
 Now let's try to restore, but first wipe the existing partition.
 
 
-```sh
+```
 pi@raspberrypi:~ $ sudo dd if=/dev/zero of=/dev/sda3 bs=4096 count=1000
 1000+0 records in
 1000+0 records out
@@ -143,7 +143,7 @@ Looks good!
 The following is equivalent to the commands given as examples above.
 
 
-```sh
+```
 pi@raspberrypi:~ $ sudo -s
 root@raspberrypi:/home/pi# backup.e4 -c /dev/sda3 > sda3_backup_compressed.bgz
 Backing up partition /dev/sda3 to backup file stdout
@@ -174,7 +174,7 @@ root@raspberrypi:/home/pi#
 Works, but not terribly useful! Wait, you could use it to send your backup to a remote location.
 
 
-```sh
+```
 pi@raspberrypi:~ $ sudo chmod +rw /dev/sda3
 pi@raspberrypi:~ $ backup.e4 -c /dev/sda3 | ssh jcyr@vm-ubuntu.localdomain "cat >sda3_backup_compressed.bgz"
 Backing up partition /dev/sda3 to backup file stdout
@@ -193,7 +193,7 @@ pi@raspberrypi:~
 Now, restore from remote.
 
 
-```sh
+```
 pi@raspberrypi:~ $ scp jcyr@vm-ubuntu:sda3_backup_compressed.bgz /dev/stdout | restore.e4 /dev/sda3
 Restoring partition /dev/sda3 from backup file stdin
 Reading header
@@ -215,7 +215,7 @@ All of the examples were captured on a Raspberry Pi4B but should work on any Deb
 
 **backup.e4** relies on a few common packages that may not be pre-installed in your distribution. Install them with:
 
-```sh
+```
 sudo apt install zlib1g-dev git
 ```
 
@@ -223,13 +223,13 @@ sudo apt install zlib1g-dev git
 
 Retrieve the source code
 
-```sh
+```
 git clone https://github.com/miscellaneousbits/backup.e4.git
 ```
 
 Compile and link
 
-```sh
+```
 cd backup.e4
 make
 ```
@@ -237,7 +237,7 @@ make
 
 Install **backup.e4**
 
-```sh
+```
 make install
 ```
 
@@ -246,6 +246,50 @@ By default this will install to /usr/local/bin. If this is not suitable change t
 ## Security alert
 
 Like any bare metal backup utility **backup.e4** copies file system data verbatim. Dump files will therefore likely contain unencrypted password and private key data. Backup dumps must remain secured at all times. Alternatively the backups should be encrypted.
+
+For example
+
+```
+pi@raspberrypi:~ $ # Create random 256 bit password
+pi@raspberrypi:~ $ PASSWORD=$(openssl rand -base64 32)
+pi@raspberrypi:~ $ # Encrypt it with public key
+pi@raspberrypi:~ $ echo -n $PASSWORD | openssl rsautl -encrypt -inkey ~/.ssh/id_rsa.pem.pub -pubin -out sda3.encrypted.key
+pi@raspberrypi:~ $ # Encrypt the backup
+pi@raspberrypi:~ $ backup.e4 -c /dev/sda3 | openssl enc -aes-256-cbc -salt -iter 10 -out sda3_encrypted.bgz -pass pass:$PASSWORD 
+Backing up partition /dev/sda3 to backup file stdout
+4,096 bytes per block, 32,768 blocks per group, 52,428,000 blocks, 1,600 groups
+Scanning block groups
+  1,224,569 blocks in use
+Writing header
+Writing partition bitmap
+Writing data blocks
+......................................
+1,224,569 blocks dumped (5,015,834,624 bytes)
+Elapsed time 00:02:15
+pi@raspberrypi:~ $ # Clear the password
+pi@raspberrypi:~ $ PASWORD=
+pi@raspberrypi:~ $
+```
+
+And
+
+```
+pi@raspberrypi:~ $ #decrypt encryption key
+pi@raspberrypi:~ $ PASSWORD=$(openssl rsautl -decrypt -inkey ~/.ssh/id_rsa -in sda3.encrypted.key) 
+pi@raspberrypi:~ $ # Decrypt the dump and restore the partition
+pi@raspberrypi:~ $ openssl enc -d -aes-256-cbc -in sda3_encrypted.bgz -iter 10 -pass pass:$PASSWORD | restore.e4 /dev/sda3
+Restoring partition /dev/sda3 from backup file stdin
+Reading header
+Bytes per block 4,096, 52,428,000 blocks
+Reading bitmap
+  1,224,569 blocks in use
+Restoring data blocks
+......................................
+1,224,569 blocks restored (5,015,834,624 bytes)
+Elapsed time 00:00:48
+pi@raspberrypi:~ $ # Clear the password
+pi@raspberrypi:~ $ PASSWORD=
+```
 
 ## Integration build status
 

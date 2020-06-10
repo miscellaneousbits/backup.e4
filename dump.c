@@ -157,17 +157,22 @@ void dump(u8 comp)
     u64 comp_bytes = dump_flush();
     dump_close();
     part_close();
-    if (comp && dump_fn)
+    if (dump_fn)
     {
-        print(
-            "\n%'lld blocks dumped (%'lld bytes, compressed to %'lld "
-            "bytes)\n  Compression ratio %d%%\n",
-            block_cnt, block_cnt * block_size, comp_bytes,
-            (u32)(100 - (comp_bytes * 100) / (block_cnt * block_size)));
+        if (comp)
+            print(
+                "\n%'lld blocks dumped (%'lld bytes, compressed to %'lld "
+                "bytes)\n  Compression ratio %d%%\n",
+                block_cnt, block_cnt * block_size, comp_bytes,
+                (u32)(100 - (comp_bytes * 100) / (block_cnt * block_size)));
+        else
+            print("\n%'lld blocks dumped (%'lld bytes)\n", block_cnt,
+                block_cnt * block_size);
     }
     else
     {
-        print("\n%'lld blocks dumped (%'lld bytes)\n", block_cnt, comp_bytes);
+        print("\n%'lld blocks dumped (%'lld bytes)\n", block_cnt,
+            block_cnt * block_size);
     }
     free(group_bm);
     free(bm);
