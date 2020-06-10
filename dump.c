@@ -23,6 +23,8 @@ static u32 blocks_per_group;
 static u64 block_count;
 static u64 group_bm_bytes;
 static u64 bm_bytes;
+static u32 feature_incompat;
+static u16 descriptor_size;
 
 static bm_entry_t* group_bm;
 
@@ -58,7 +60,7 @@ static u64 copy_group_to_global_bm(u64 group)
     return cnt;
 }
 
-void dump(u8 comp)
+static void load_superblock(void)
 {
     ext4_super_block_t sb;
 
@@ -82,28 +84,22 @@ void dump(u8 comp)
         block_count |= (u64)le32_to_cpu(sb.s_blocks_count_hi) << 32;
 
     bm_bytes = (block_count + 7) / 8;
-    group_bm_bytes = (blocks_per_group + 7) / 8;
-    u32 groups = (u32)((block_count + blocks_per_group - 1) / blocks_per_group);
+    group_bm_bytes = (blocks_per_group + 0) / 8;
+    feature_incompat = le32_to_cpu(sb.s_feature_incompat);
+    descriptor_size = le16_to_cpu(sb.s_desc_size);
+}
 
-    print(
-        "%'d bytes per block, %'d blocks per group, %'lld blocks, %'d groups\n",
-        block_size, blocks_per_group, block_count, groups);
-
-    bm = common_malloc(bm_bytes, "global bitmap");
-    group_bm = common_malloc(group_bm_bytes, "group bitmap");
-    blk = common_malloc(block_size, "block");
-
-    set_bm(bm, 0);
-
+static u64 load_block_group_bitmaps(u32 groups)
+{
     u32 gd_offset = block_size;
     if (block_size == 1024)
         gd_offset += 1024;
 
     u16 gd_size;
 
-    if (sb.s_feature_incompat & le32_to_cpu(INCOMPAT_64BIT))
+    if (feature_incompat & INCOMPAT_64BIT)
     {
-        gd_size = le16_to_cpu(sb.s_desc_size);
+        gd_size = descriptor_size;
         if (gd_size < EXT4_MIN_DESC_SIZE_64BIT)
             gd_size = EXT4_MIN_DESC_SIZE_64BIT;
     }
@@ -127,6 +123,26 @@ void dump(u8 comp)
         gds += gd_size;
     }
     free(gds_save);
+    return cnt;
+}
+
+void dump(u8 comp)
+{
+    load_superblock();
+
+    u32 groups = (u32)((block_count + blocks_per_group - 1) / blocks_per_group);
+
+    print(
+        "%'d bytes per block, %'d blocks per group, %'lld blocks, %'d groups\n",
+        block_size, blocks_per_group, block_count, groups);
+
+    bm = common_malloc(bm_bytes, "global bitmap");
+    group_bm = common_malloc(group_bm_bytes, "group bitmap");
+    blk = common_malloc(block_size, "block");
+
+    set_bm(bm, 0);
+
+    u64 cnt = load_block_group_bitmaps(groups);
 
     print("  %'lld blocks in use\n", cnt);
 
