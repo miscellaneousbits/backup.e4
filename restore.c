@@ -32,7 +32,9 @@ void restore(void)
     dump_open(0, 0);
 
     print("Reading header\n");
+
     dump_read(&hdr, sizeof(hdr), "header");
+
     if (hdr.magic != 0xe4bae4ba)
         error("Not dump file\n");
 
@@ -42,15 +44,20 @@ void restore(void)
     blk = common_malloc(hdr.block_size, "block");
 
     print("Reading bitmap\n");
+
     dump_read(bm, (hdr.blocks + 7) / 8, "bitmap");
+
     u64 cnt = 0;
+
     for (u64 block = 0; block < hdr.blocks; block++)
         cnt += get_bm(bm, block);
+
     print("  %'lld blocks in use\n", cnt);
 
     part_open(1);
 
     print("Restoring data blocks\n");
+
     cnt = 0;
     for (u64 block = 0; block < hdr.blocks; block++)
     {
