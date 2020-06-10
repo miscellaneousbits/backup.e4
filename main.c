@@ -28,6 +28,7 @@ char* part_fn = NULL;
 char* dump_fn = NULL;
 
 u8 b_flag = 1;
+u8 c_flag = 0;
 
 static void help(char* prog)
 {
@@ -49,12 +50,8 @@ static void help(char* prog)
     exit(0);
 }
 
-int main(int ac, char* av[])
+static void parse_args(int ac, char* av[])
 {
-    u8 c_flag = 0;
-
-    setlocale(LC_NUMERIC, "");
-
     char* who = strrchr(av[0], '/');
     if (who)
         who++;
@@ -77,7 +74,7 @@ int main(int ac, char* av[])
         case 'v':
             print("Version %s, author Jean M. Cyr, licensed under GPL v2.0\n",
                 BACKUP_E4_VERSION);
-            return 0;
+            exit(0);
         case 'c':
             c_flag = 1;
             break;
@@ -121,10 +118,17 @@ int main(int ac, char* av[])
         part_fn = b_flag ? fn1 : fn2;
         dump_fn = b_flag ? fn2 : fn1;
     }
+}
+
+int main(int ac, char* av[])
+{
+    setlocale(LC_NUMERIC, "");
+
+    parse_args(ac, av);
 
     if (dump_fn)
     {
-        who = strrchr(dump_fn, '.');
+        char* who = strrchr(dump_fn, '.');
         if (!who)
         {
             char* cp = common_malloc(strlen(dump_fn) + 5, "file name");
