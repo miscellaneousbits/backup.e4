@@ -3,12 +3,23 @@ BINR    = restore.e4
 CC      = gcc
 STRIP   = strip
 
-#ECHO   =
-#OFLAGS = -g
-ECHO    = @
+DEBUG   ?= 0
+INTEGRATION ?= 0
+
+ifeq ($(DEBUG), 0)
+OFLAGS = -g
+else
 OFLAGS  = -O3 -flto
+endif
+
+ifeq ($(INTEGRATION),0)
+ECHO    = @
+else
+ECHO    =
+endif
+
 CFLAGS  = $(OFLAGS) -Wall -fdata-sections -ffunction-sections -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
-LDFLAGS = $(OFLAGS) -Wl,--gc-sections -lz
+LDFLAGS = $(OFLAGS) -Wl,--gc-sections -static -lz
 
 INSTALLDIR = /usr/local/bin
 
@@ -23,7 +34,9 @@ all: $(BINB) $(BINR)
 $(BINB): $(OBJ)
 	@echo "$^ -> $@"
 	$(ECHO)$(CC) -o $@ $^ $(LDFLAGS)
+ifeq ($DEBUG, 0)
 	$(ECHO)$(STRIP) $@
+endif
 
 $(BINR): $(BINB)
 	@echo "$^ -> $@"
