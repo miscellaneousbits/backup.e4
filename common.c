@@ -18,6 +18,15 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 
+void print(char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    fflush(stderr);
+}
+
 void error(char* fmt, ...)
 {
     fprintf(stderr, "\n");

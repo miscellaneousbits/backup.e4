@@ -32,7 +32,7 @@ u8 b_flag = 1;
 static void help(char* prog)
 {
     if (b_flag)
-        fprintf(stderr,
+        print(
             "\nUsage: %s [-v] [-c] extfs_partition [dump_file]\n"
             "    -c              Compress the dump file\n"
             "    -v              Show version\n"
@@ -40,7 +40,7 @@ static void help(char* prog)
             "    dump_file       Dump file name. Use stdout if omitted.\n\n",
             prog);
     else
-        fprintf(stderr,
+        print(
             "\nUsage: %s [-v] [dump_file] extfs_partition\n"
             "    -v              Show version\n"
             "    dump_file       Dump file name. Use stdin if omitted\n"
@@ -75,18 +75,18 @@ int main(int ac, char* av[])
         switch (c)
         {
         case 'v':
-            fprintf(stderr, "Version %s\n", BACKUP_E4_VERSION);
+            print("Version %s\n", BACKUP_E4_VERSION);
             return 0;
         case 'c':
             c_flag = 1;
             break;
         case '?':
             if (optopt == 'c')
-                fprintf(stderr, "Option -c requires an argument.\n");
+                print("Option -c requires an argument.\n");
             else if (isprint(optopt))
-                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                print("Unknown option `-%c'.\n", optopt);
             else
-                fprintf(stderr, "Unknown option character `\\x%x'\n", optopt);
+                print("Unknown option character `\\x%x'\n", optopt);
         case 'h':
         default:
             help(av[0]);
@@ -107,7 +107,7 @@ int main(int ac, char* av[])
     }
     if (fn1 == NULL)
     {
-        fprintf(stderr, "File name(s) must be specified\n");
+        print("File name(s) must be specified\n");
         help(av[0]);
     }
     if (fn2 == NULL)
@@ -142,7 +142,7 @@ int main(int ac, char* av[])
     elapsed /= 60;
     u32 m = elapsed % 60;
     elapsed /= 60;
-    fprintf(stderr, "Elapsed time %02ld:%02d:%02d\n", elapsed, m, s);
+    print("Elapsed time %02ld:%02d:%02d\n", elapsed, m, s);
 
     return 0;
 }

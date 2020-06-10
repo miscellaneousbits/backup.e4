@@ -62,7 +62,7 @@ void dump(u8 comp)
 {
     ext4_super_block_t sb;
 
-    fprintf(stderr, "Backing up partition %s to backup file %s\n", part_fn,
+    print("Backing up partition %s to backup file %s\n", part_fn,
         dump_fn ? dump_fn : "stdout");
 
     part_open(0);
@@ -85,7 +85,7 @@ void dump(u8 comp)
     group_bm_bytes = (blocks_per_group + 7) / 8;
     u32 groups = (u32)((block_count + blocks_per_group - 1) / blocks_per_group);
 
-    fprintf(stderr,
+    print(
         "%'d bytes per block, %'d blocks per group, %'lld blocks, %'d groups\n",
         block_size, blocks_per_group, block_count, groups);
 
@@ -110,8 +110,7 @@ void dump(u8 comp)
     else
         gd_size = EXT4_MIN_DESC_SIZE;
 
-    fprintf(
-        stderr, "Scanning block groups\n");
+    print("Scanning block groups\n");
     char* gds = common_malloc(groups * gd_size, "group descriptors");
     char* gds_save = gds;
     part_seek(gd_offset, "group descriptors");
@@ -129,20 +128,20 @@ void dump(u8 comp)
     }
     free(gds_save);
 
-    fprintf(stderr, "  %'lld blocks in use\n", cnt);
+    print("  %'lld blocks in use\n", cnt);
 
     dump_open(comp, 1);
 
-    fprintf(stderr, "Writing header\n");
+    print("Writing header\n");
     hdr.blocks = block_count;
     hdr.block_size = block_size;
     hdr.magic = 0xe4bae4ba;
     strcpy((char*)&hdr.version, BACKUP_E4_VERSION);
     dump_write(&hdr, sizeof(hdr), "header");
 
-    fprintf(stderr, "Writing partition bitmap\n");
+    print("Writing partition bitmap\n");
     dump_write(bm, bm_bytes, "bitmap");
-    fprintf(stderr, "Writing data blocks\n");
+    print("Writing data blocks\n");
     u64 block_cnt = 0;
     for (u64 block = 0; block < block_count; block++)
     {
@@ -151,10 +150,7 @@ void dump(u8 comp)
             part_read_block(block);
             dump_write(blk, block_size, "block");
             if ((block_cnt++ & 32767) == 0)
-            {
-                fprintf(stderr, ".");
-                fflush(stderr);
-            }
+                print(".");
         }
     }
 
@@ -163,7 +159,7 @@ void dump(u8 comp)
     part_close();
     if (comp && dump_fn)
     {
-        fprintf(stderr,
+        print(
             "\n%'lld blocks dumped (%'lld bytes, compressed to %'lld "
             "bytes)\n  Compression ratio %d%%\n",
             block_cnt, block_cnt * block_size, comp_bytes,
@@ -171,8 +167,7 @@ void dump(u8 comp)
     }
     else
     {
-        fprintf(stderr, "\n%'lld blocks dumped (%'lld bytes)\n", block_cnt,
-            comp_bytes);
+        print("\n%'lld blocks dumped (%'lld bytes)\n", block_cnt, comp_bytes);
     }
     free(group_bm);
     free(bm);
