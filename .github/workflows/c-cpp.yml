@@ -15,7 +15,12 @@ jobs:
     - uses: actions/checkout@v2
     - name: make
       run: make INTEGRATION=1
-    - name: verify-backup
-      run: ./backup.e4 -h
-    - name: verify-restore
-      run: ./restore.e4 -h
+    - name: verify
+      run: |
+        ./backup.e4 -h
+        ./restore.e4 -h
+        ./backup.e4 -c data/test.img test
+        dd if=/dev/zero of=restored.img bs=4096 count=1280
+        ./restore.e4 test.bgz restored.img
+        diff restored.img data/test.img
+        e2fsck -f -y restored.img
