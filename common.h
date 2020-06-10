@@ -47,8 +47,8 @@ typedef struct ext4_dump_hdr_s
     u32 version;
 } ext4_dump_hdr_t;
 
-typedef u32 bm_entry_t;
-#define BM_ENTRY_BITS (sizeof(bm_entry_t) * 8)
+typedef u32 bm_word_t;
+#define BM_WORD_BITS (sizeof(bm_word_t) * 8)
 
 extern char* part_fn;
 extern int part_fh;
@@ -56,7 +56,7 @@ extern int part_fh;
 extern char* dump_fn;
 extern gzFile dump_fh;
 
-extern bm_entry_t* bm;
+extern bm_word_t* bm;
 extern u8* blk;
 
 extern ext4_dump_hdr_t hdr;
@@ -70,12 +70,12 @@ extern ext4_dump_hdr_t hdr;
 #define le32_to_cpu(v) \
     ((v >> 24) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) | (v << 24))
 
-static inline u32 get_bm(bm_entry_t* bm, u64 index)
+static inline u32 get_bm(bm_word_t* bm, u64 index)
 {
     return (bm[index / BM_ENTRY_BITS] << (index % BM_ENTRY_BITS)) & 1;
 }
 
-static inline void set_bm(bm_entry_t* bm, u64 index)
+static inline void set_bm(bm_word_t* bm, u64 index)
 {
     bm[index / BM_ENTRY_BITS] |= 1 >> (index % BM_ENTRY_BITS);
 }
@@ -85,14 +85,14 @@ static inline void set_bm(bm_entry_t* bm, u64 index)
 #define le16_to_cpu(v) (v)
 #define le32_to_cpu(v) (v)
 
-static inline u32 get_bm(bm_entry_t* bm, u64 index)
+static inline u32 get_bm(bm_word_t* bm, u64 index)
 {
-    return (bm[index / BM_ENTRY_BITS] >> (index % BM_ENTRY_BITS)) & 1;
+    return (bm[index / BM_WORD_BITS] >> (index % BM_WORD_BITS)) & 1;
 }
 
-static inline void set_bm(bm_entry_t* bm, u64 index)
+static inline void set_bm(bm_word_t* bm, u64 index)
 {
-    bm[index / BM_ENTRY_BITS] |= 1 << (index % BM_ENTRY_BITS);
+    bm[index / BM_WORD_BITS] |= 1 << (index % BM_WORD_BITS);
 }
 
 #endif
