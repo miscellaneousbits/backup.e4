@@ -75,7 +75,8 @@ int main(int ac, char* av[])
         switch (c)
         {
         case 'v':
-            print("Version %s\n", BACKUP_E4_VERSION);
+            print("Version %s, author Jean M. Cyr, licensed under GPL v2.0\n",
+                BACKUP_E4_VERSION);
             return 0;
         case 'c':
             c_flag = 1;
