@@ -138,7 +138,7 @@ Looks good!
 
 ### Using pipes
 
-**backup.e4** can redirect dump input and output to standard files. By omitting the dump file name you tell **backup.e4** to write the dump file to stdout, and to stdin for restore.
+**backup.e4** can redirect dump input and output to standard files. By omitting the dump file name you tell **backup.e4** to write the dump file to stdout, and read the dump file from stdin for restore.
 
 The following is equivalent to the commands given as examples above.
 
