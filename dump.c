@@ -63,7 +63,8 @@ static u64 copy_group_to_global_bm(u64 group)
 
 static void load_superblock(void)
 {
-    ext4_super_block_t sb;
+    ext4_super_block_t* super =
+        common_malloc(sizeof(ext4_super_block_t), "super block");
 
     print("Backing up partition %s to backup file %s\n", part_fn,
         dump_fn ? dump_fn : "stdout");
@@ -71,24 +72,29 @@ static void load_superblock(void)
     part_open(0);
 
     part_seek(1024, "super block");
-    part_read(&sb, sizeof(sb), "super block");
+    part_read(super, sizeof(*super), "super block");
 
-    if (le16_to_cpu(sb.s_magic) != 0xEF53)
+    if (le16_to_cpu(super->s_magic) != 0xEF53)
         error("Can't find super block\n");
-    if ((le16_to_cpu(sb.s_state) & 1) == 0)
+
+    if ((le16_to_cpu(super->s_state) & 1) == 0)
         error("%s was not cleanly unmounted. try\n  sudo e2fsck -f %s\n",
             part_fn, part_fn);
-    block_size = 1024u << le32_to_cpu(sb.s_log_block_size);
-    blocks_per_group = le32_to_cpu(sb.s_blocks_per_group);
-    block_count = le32_to_cpu(sb.s_blocks_count_lo);
-    if ((sb.s_feature_incompat & le32_to_cpu(INCOMPAT_64BIT)) == 0)
-        block_count |= (u64)le32_to_cpu(sb.s_blocks_count_hi) << 32;
+
+    block_size = 1024u << le32_to_cpu(super->s_log_block_size);
+    blocks_per_group = le32_to_cpu(super->s_blocks_per_group);
+
+    block_count = le32_to_cpu(super->s_blocks_count_lo);
+    if ((super->s_feature_incompat & le32_to_cpu(INCOMPAT_64BIT)) == 0)
+        block_count |= (u64)le32_to_cpu(super->s_blocks_count_hi) << 32;
 
     part_bm_bytes = (block_count + 7) / 8;
     group_bm_bytes = (blocks_per_group + 0) / 8;
-    feature_incompat = le32_to_cpu(sb.s_feature_incompat);
-    descriptor_size = le16_to_cpu(sb.s_desc_size);
+    feature_incompat = le32_to_cpu(super->s_feature_incompat);
+    descriptor_size = le16_to_cpu(super->s_desc_size);
     groups = (u32)((block_count + blocks_per_group - 1) / blocks_per_group);
+
+    free(super);
 }
 
 static u64 load_block_group_bitmaps(void)
@@ -109,8 +115,10 @@ static u64 load_block_group_bitmaps(void)
         gd_size = EXT4_MIN_DESC_SIZE;
 
     print("Scanning block groups\n");
+
     char* gds = common_malloc(groups * gd_size, "group descriptors");
     char* gds_save = gds;
+
     part_seek(gd_offset, "group descriptors");
     part_read(gds, groups * gd_size, "group descriptors");
     u64 cnt = 0;
@@ -124,23 +132,31 @@ static u64 load_block_group_bitmaps(void)
         cnt += copy_group_to_global_bm(group);
         gds += gd_size;
     }
+
     free(gds_save);
+
     return cnt;
 }
 
 static void save_backup(u8 comp)
 {
     print("Writing header\n");
+
     hdr.blocks = block_count;
     hdr.block_size = block_size;
     hdr.magic = 0xe4bae4ba;
     strcpy((char*)&hdr.version, BACKUP_E4_VERSION);
+
     dump_write(&hdr, sizeof(hdr), "header");
 
     print("Writing partition bitmap\n");
+
     dump_write(bm, part_bm_bytes, "bitmap");
+
     print("Writing data blocks\n");
+
     u64 block_cnt = 0;
+
     for (u64 block = 0; block < block_count; block++)
     {
         if (get_bm(bm, block))
@@ -153,8 +169,10 @@ static void save_backup(u8 comp)
     }
 
     u64 comp_bytes = dump_flush();
+
     dump_close();
     part_close();
+
     if (dump_fn)
     {
         if (comp)
@@ -168,10 +186,8 @@ static void save_backup(u8 comp)
                 block_cnt * block_size);
     }
     else
-    {
         print("\n%'lld blocks dumped (%'lld bytes)\n", block_cnt,
             block_cnt * block_size);
-    }
 }
 
 void dump(u8 comp)
@@ -196,7 +212,7 @@ void dump(u8 comp)
 
     save_backup(comp);
 
+    free(blk);
     free(group_bm);
     free(bm);
-    free(blk);
 }
