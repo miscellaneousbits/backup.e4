@@ -97,6 +97,7 @@ static inline void set_bm(bm_entry_t* bm, u64 index)
 
 #endif
 
+void print(char* fmt, ...);
 void error(char* fmt, ...);
 
 void part_open(u32 write);
