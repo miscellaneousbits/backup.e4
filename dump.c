@@ -18,15 +18,16 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #include "dump.h"
 
-static u16 block_size;
-static u32 blocks_per_group;
 static u64 block_count;
 static u64 group_bm_bytes;
-static u64 bm_bytes;
+static u64 part_bm_bytes;
+static u32 blocks_per_group;
 static u32 feature_incompat;
+static u32 groups;
 static u16 descriptor_size;
+static u16 block_size;
 
-static bm_entry_t* group_bm;
+static bm_word_t* group_bm;
 
 static void part_read_group_bm(u64 block)
 {
@@ -54,7 +55,7 @@ static u64 copy_group_to_global_bm(u64 group)
             cnt++;
 
     next /= 8;
-    start /= BM_ENTRY_BITS;
+    start /= BM_WORD_BITS;
     memcpy(bm + start, group_bm, next);
 
     return cnt;
@@ -83,13 +84,14 @@ static void load_superblock(void)
     if ((sb.s_feature_incompat & le32_to_cpu(INCOMPAT_64BIT)) == 0)
         block_count |= (u64)le32_to_cpu(sb.s_blocks_count_hi) << 32;
 
-    bm_bytes = (block_count + 7) / 8;
+    part_bm_bytes = (block_count + 7) / 8;
     group_bm_bytes = (blocks_per_group + 0) / 8;
     feature_incompat = le32_to_cpu(sb.s_feature_incompat);
     descriptor_size = le16_to_cpu(sb.s_desc_size);
+    groups = (u32)((block_count + blocks_per_group - 1) / blocks_per_group);
 }
 
-static u64 load_block_group_bitmaps(u32 groups)
+static u64 load_block_group_bitmaps(void)
 {
     u32 gd_offset = block_size;
     if (block_size == 1024)
@@ -126,28 +128,8 @@ static u64 load_block_group_bitmaps(u32 groups)
     return cnt;
 }
 
-void dump(u8 comp)
+static void save_backup(u8 comp)
 {
-    load_superblock();
-
-    u32 groups = (u32)((block_count + blocks_per_group - 1) / blocks_per_group);
-
-    print(
-        "%'d bytes per block, %'d blocks per group, %'lld blocks, %'d groups\n",
-        block_size, blocks_per_group, block_count, groups);
-
-    bm = common_malloc(bm_bytes, "global bitmap");
-    group_bm = common_malloc(group_bm_bytes, "group bitmap");
-    blk = common_malloc(block_size, "block");
-
-    set_bm(bm, 0);
-
-    u64 cnt = load_block_group_bitmaps(groups);
-
-    print("  %'lld blocks in use\n", cnt);
-
-    dump_open(comp, 1);
-
     print("Writing header\n");
     hdr.blocks = block_count;
     hdr.block_size = block_size;
@@ -156,7 +138,7 @@ void dump(u8 comp)
     dump_write(&hdr, sizeof(hdr), "header");
 
     print("Writing partition bitmap\n");
-    dump_write(bm, bm_bytes, "bitmap");
+    dump_write(bm, part_bm_bytes, "bitmap");
     print("Writing data blocks\n");
     u64 block_cnt = 0;
     for (u64 block = 0; block < block_count; block++)
@@ -190,6 +172,30 @@ void dump(u8 comp)
         print("\n%'lld blocks dumped (%'lld bytes)\n", block_cnt,
             block_cnt * block_size);
     }
+}
+
+void dump(u8 comp)
+{
+    load_superblock();
+
+    print(
+        "%'d bytes per block, %'d blocks per group, %'lld blocks, %'d groups\n",
+        block_size, blocks_per_group, block_count, groups);
+
+    bm = common_malloc(part_bm_bytes, "global bitmap");
+    group_bm = common_malloc(group_bm_bytes, "group bitmap");
+    blk = common_malloc(block_size, "block");
+
+    set_bm(bm, 0);
+
+    u64 cnt = load_block_group_bitmaps();
+
+    print("  %'lld blocks in use\n", cnt);
+
+    dump_open(comp, 1);
+
+    save_backup(comp);
+
     free(group_bm);
     free(bm);
     free(blk);
