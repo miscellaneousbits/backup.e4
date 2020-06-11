@@ -20,7 +20,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #include "version.h"
 
-#include <ctype.h>
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <locale.h>
@@ -28,11 +28,10 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <zlib.h>
+
+#define ASSERT assert
 
 typedef unsigned long long u64;
 typedef unsigned int u32;
@@ -53,13 +52,13 @@ typedef u32 bm_word_t;
 extern char* part_fn;
 extern int part_fh;
 
-extern char* dump_fn;
-extern gzFile dump_fh;
-
-extern bm_word_t* bm;
+extern bm_word_t* part_bm;
 extern u8* blk;
 
 extern ext4_dump_hdr_t hdr;
+
+extern u64 block_count;
+extern u16 block_size;
 
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN ||                 \
     defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__THUMBEB__) || \
@@ -70,13 +69,15 @@ extern ext4_dump_hdr_t hdr;
 #define le32_to_cpu(v) \
     ((v >> 24) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) | (v << 24))
 
-static inline u32 get_bm(bm_word_t* bm, u64 index)
+static inline u32 get_bm_bit(bm_word_t* bm, u64 index)
 {
+    assert(index < block_count);
     return (bm[index / BM_ENTRY_BITS] << (index % BM_ENTRY_BITS)) & 1;
 }
 
-static inline void set_bm(bm_word_t* bm, u64 index)
+static inline void set_bm_bit(bm_word_t* bm, u64 index)
 {
+    assert(index < block_count);
     bm[index / BM_ENTRY_BITS] |= 1 >> (index % BM_ENTRY_BITS);
 }
 
@@ -85,13 +86,15 @@ static inline void set_bm(bm_word_t* bm, u64 index)
 #define le16_to_cpu(v) (v)
 #define le32_to_cpu(v) (v)
 
-static inline u32 get_bm(bm_word_t* bm, u64 index)
+static inline u32 get_bm_bit(bm_word_t* bm, u64 index)
 {
+    assert(index < block_count);
     return (bm[index / BM_WORD_BITS] >> (index % BM_WORD_BITS)) & 1;
 }
 
-static inline void set_bm(bm_word_t* bm, u64 index)
+static inline void set_bm_bit(bm_word_t* bm, u64 index)
 {
+    assert(index < block_count);
     bm[index / BM_WORD_BITS] |= 1 << (index % BM_WORD_BITS);
 }
 
@@ -100,16 +103,20 @@ static inline void set_bm(bm_word_t* bm, u64 index)
 void print(char* fmt, ...);
 void error(char* fmt, ...);
 
+#define READ 0
+#define WRITE 1
+
 void part_open(u32 write);
 void part_seek(u64 offset, char* emsg);
 void part_read(void* buffer, u32 size, char* emsg);
+void part_read_block(u64 block, char* emsg);
 void part_write(void* buffer, u32 size, char* emsg);
+void part_write_block(u64 block, char* emsg);
 void part_close(void);
 
-void dump_open(u32 compression, u32 write);
+void dump_open(u32 write);
 void dump_read(void* buffer, u32 size, char* emsg);
 void dump_write(void* buffer, u32 size, char* emsg);
-u64 dump_flush(void);
 void dump_close(void);
 
 void* common_malloc(u64 size, char* emsg);

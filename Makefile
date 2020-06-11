@@ -3,11 +3,11 @@ BINR    = restore.e4
 CC      = gcc
 STRIP   = strip
 
-DEBUG   ?= 0
+DEBUG  ?= 1
 INTEGRATION ?= 0
 
-ifeq ($(DEBUG), 0)
-OFLAGS = -g
+ifeq ($(DEBUG), 1)
+OFLAGS  = -g
 else
 OFLAGS  = -O3 -flto
 endif
@@ -19,7 +19,10 @@ ECHO    =
 endif
 
 CFLAGS  = $(OFLAGS) -Wall -fdata-sections -ffunction-sections -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
-LDFLAGS = $(OFLAGS) -Wl,--gc-sections -static -lz
+ifeq ($(DEBUG), 0)
+CFLAGS += -DNDEBUG
+endif
+LDFLAGS = $(OFLAGS) -Wl,--gc-sections
 
 INSTALLDIR = /usr/local/bin
 
@@ -34,7 +37,7 @@ all: $(BINB) $(BINR)
 $(BINB): $(OBJ)
 	@echo "$^ -> $@"
 	$(ECHO)$(CC) -o $@ $^ $(LDFLAGS)
-ifeq ($DEBUG, 0)
+ifeq ($(DEBUG), 0)
 	$(ECHO)$(STRIP) $@
 endif
 

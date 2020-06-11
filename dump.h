@@ -20,7 +20,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 
-void dump(u8 comp);
+void dump(void);
 
 typedef struct ext4_super_block_s
 {

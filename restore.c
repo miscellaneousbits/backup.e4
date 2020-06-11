@@ -18,18 +18,11 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #include "restore.h"
 
-static void part_write_block(u64 block, char* emsg)
-{
-    part_seek(block * hdr.block_size, emsg);
-    part_write(blk, hdr.block_size, emsg);
-}
-
 void restore(void)
 {
-    print("Restoring partition %s from backup file %s\n", part_fn,
-        dump_fn ? dump_fn : "stdin");
+    print("Restoring partition %s\n", part_fn);
 
-    dump_open(0, 0);
+    dump_open(READ);
 
     print("Reading header\n");
 
@@ -38,43 +31,47 @@ void restore(void)
     if (hdr.magic != 0xe4bae4ba)
         error("Not dump file\n");
 
-    print("Bytes per block %'d, %'lld blocks\n", hdr.block_size, hdr.blocks);
+    print("Bytes per block %d, %lld blocks\n", hdr.block_size, hdr.blocks);
 
-    bm = common_malloc((hdr.blocks + 7) / 8, "global bitmap");
-    blk = common_malloc(hdr.block_size, "block");
+    block_size = hdr.block_size;
+    block_count = hdr.blocks;
+
+    u32 bm_bytes = (u32)((block_count + 7) / 8);
+
+    part_bm = common_malloc(bm_bytes, "partition bitmap");
+    blk = common_malloc(block_size, "block");
 
     print("Reading bitmap\n");
 
-    dump_read(bm, (hdr.blocks + 7) / 8, "bitmap");
+    dump_read(part_bm, bm_bytes, "bitmap");
 
     u64 cnt = 0;
 
-    for (u64 block = 0; block < hdr.blocks; block++)
-        cnt += get_bm(bm, block);
+    for (u64 block = 0; block < block_count; block++)
+        cnt += get_bm_bit(part_bm, block);
 
-    print("  %'lld blocks in use\n", cnt);
+    print("  %lld blocks in use\n", cnt);
 
-    part_open(1);
+    part_open(WRITE);
 
     print("Restoring data blocks\n");
 
     cnt = 0;
-    for (u64 block = 0; block < hdr.blocks; block++)
+    for (u64 block = 0; block < block_count; block++)
     {
-        if (get_bm(bm, block))
+        if (get_bm_bit(part_bm, block))
         {
-            dump_read(blk, hdr.block_size, "block");
-            part_write_block(block, "block");
+            dump_read(blk, block_size, "block");
+            part_write_block(block, "data block");
             if ((cnt++ & 32767) == 0)
             {
                 print(".");
-                fflush(stdout);
+                fflush(stderr);
             }
         }
     }
-    print("\n%'lld blocks restored (%'lld bytes)\n", cnt, cnt * hdr.block_size);
-    part_close();
-    dump_close();
-    free(bm);
+    print("\n%lld blocks restored (%lld bytes)\n", cnt, cnt * block_size);
+
+    free(part_bm);
     free(blk);
 }
