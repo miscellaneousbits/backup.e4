@@ -67,7 +67,7 @@ $ # Better!
 Or, we can compress the backup file.
 
 ```
-$ sudo backup.e4 /dev/sda3 | gzip -1 -q > sda3_compresse.bak
+$ sudo backup.e4 /dev/sda3 | gzip -1 -q > sda3_compressed.bak
 Backing up partition /dev/sda3
 4,096 bytes per block, 32,768 blocks per group, 52,428,000 blocks, 1,600 groups
   32 bytes per descriptor
@@ -84,7 +84,7 @@ Elapsed time 00:05:16
 ```
 $ ls -alh sda3*.bak
 -rw-r--r-- 1 pi pi  17G Jun 12 18:39 sda3.bak
--rw-r--r-- 1 pi pi 705M Jun 12 18:57 sda3_compresse.bak
+-rw-r--r-- 1 pi pi 705M Jun 12 18:57 sda3_compressed.bak
 ```
 
 Compression is slower but reduces dump file size considerably!
@@ -121,7 +121,7 @@ rootfs: 55420/12876800 files (0.2% non-contiguous), 4244566/52428000 blocks
 Looks good! For a compressed file you could use:
 
 ```
-gunzip -cq sda3_compresse.bak | restore.e4 /dev/sda3
+gunzip -cq sda3_compressed.bak | restore.e4 /dev/sda3
 ```
 
 ### Using pipes
