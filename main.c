@@ -46,6 +46,7 @@ static void parse_args(int ac, char* av[])
 int main(int ac, char* av[])
 {
     setlocale(LC_NUMERIC, "");
+    setlocale(LC_TIME, "");
 
     parse_args(ac, av);
 
@@ -57,11 +58,16 @@ int main(int ac, char* av[])
     dump_close();
 
     time_t elapsed = time(NULL) - start_time;
-    u32 s = elapsed % 60;
+	struct tm t;
+    t.tm_sec = elapsed % 60;
     elapsed /= 60;
-    u32 m = elapsed % 60;
+    t.tm_min = elapsed % 60;
     elapsed /= 60;
-    print("Elapsed time %02ld:%02d:%02d\n", elapsed, m, s);
+	t.tm_hour = elapsed;
+
+	char buffer[16];
+	strftime(buffer, sizeof(buffer), "%X", &t);
+    print("Elapsed time %s\n", buffer);
 
     return 0;
 }
