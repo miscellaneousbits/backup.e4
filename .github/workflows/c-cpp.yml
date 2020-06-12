@@ -14,13 +14,31 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: make
-      run: make INTEGRATION=1
+      run: make INTEGRATION=1 DEBUG=0
     - name: verify
       run: |
-        ./backup.e4 -h
-        ./restore.e4 -h
-        ./backup.e4 -c data/test.img test
-        dd if=/dev/zero of=restored.img bs=4096 count=1280
-        ./restore.e4 test.bgz restored.img
-        diff restored.img data/test.img
+        echo "*** Help ***"
+        ./backup.e4
+        ./restore.e4
+        echo "*** Unzip 10M image ***"
+        gunzip data/10M.img.gz
+        echo "*** backup ***"
+        ./backup.e4 data/10M.img > test
+        echo "*** zero the destination ***"
+        dd if=/dev/zero of=restored.img bs=1024 count=10240
+        echo "*** restore ***"
+        cat test | ./restore.e4 restored.img
+        echo "*** check file system ***"
         e2fsck -f -y restored.img
+        echo "*** Unzip 1G image ***"
+        gunzip data/1G.img.gz
+        echo "*** backup ***"
+        ./backup.e4 data/1G.img > test
+        echo "*** zero the destination ***"
+        dd if=/dev/zero of=restored.img bs=4096 count=262140
+        echo "*** restore ***"
+        cat test | ./restore.e4 restored.img
+        echo "*** check file system ***"
+        e2fsck -f -y restored.img
+        echo "*** success ***"
+        rm restored.img data/* test

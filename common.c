@@ -18,8 +18,18 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 
+u64 block_count;
+int part_fh = -1;
+u32* part_bm = NULL;
+char* part_fn = NULL;
+u16 block_size;
+u8* blk = NULL;
+
+ext4_dump_hdr_t hdr;
+
 void print(char* fmt, ...)
 {
+    ASSERT(fmt);
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
@@ -29,6 +39,7 @@ void print(char* fmt, ...)
 
 void error(char* fmt, ...)
 {
+    ASSERT(fmt);
     fprintf(stderr, "\n");
     va_list args;
     va_start(args, fmt);
@@ -39,8 +50,9 @@ void error(char* fmt, ...)
 
 void part_open(u32 write)
 {
-    part_fh =
-        open(part_fn, (write ? O_WRONLY : O_RDONLY) | O_EXCL | O_LARGEFILE);
+    ASSERT((write == READ) || (write = WRITE));
+    part_fh = open(part_fn,
+        ((write == WRITE) ? O_WRONLY : O_RDONLY) | O_EXCL | O_LARGEFILE);
     if (part_fh < 0)
         error("Can't open partition %s\n%s\n", part_fn, strerror(errno));
 }
@@ -49,6 +61,8 @@ static u64 last_offset;
 
 void part_seek(u64 offset, char* emsg)
 {
+    ASSERT(offset < block_count * block_size);
+    ASSERT(part_fh >= 0);
     last_offset = offset;
     if (lseek64(part_fh, offset, SEEK_SET) != offset)
         error("Can't seek for %s  at 0x%llx\n%s\n", emsg, offset,
@@ -57,62 +71,60 @@ void part_seek(u64 offset, char* emsg)
 
 void part_read(void* buffer, u32 size, char* emsg)
 {
+    ASSERT(buffer);
+    ASSERT(part_fh >= 0);
     if (read(part_fh, buffer, size) != size)
-        error("Can't read %s at offset %'lld for %d\n%s\n", emsg, last_offset,
+        error("Can't read %s at offset %lld for %d\n%s\n", emsg, last_offset,
             size, strerror(errno));
+}
+
+void part_read_block(u64 block, char* emsg)
+{
+    ASSERT(block < block_count);
+    part_seek(block * block_size, emsg);
+    part_read(blk, block_size, emsg);
 }
 
 void part_write(void* buffer, u32 size, char* emsg)
 {
+    ASSERT(buffer);
+    ASSERT(part_fh >= 0);
     if (write(part_fh, buffer, size) != size)
         error("Can't write %s\n%s\n", emsg, strerror(errno));
 }
 
+void part_write_block(u64 block, char* emsg)
+{
+    ASSERT(block < block_count);
+    part_seek(block * block_size, emsg);
+    part_write(blk, block_size, emsg);
+}
+
 void part_close(void)
 {
+    ASSERT(part_fh >= 0);
     close(part_fh);
 }
 
-void dump_open(u32 comp, u32 write)
+void dump_open(u32 write)
 {
-    char mode[4] = {'r', 'b', 0, 0};
-    int f = fileno(stdin);
-    if (write)
-    {
-        mode[0] = 'w';
-        mode[2] = '0' + comp;
-        f = fileno(stdout);
-    }
-    if (dump_fn)
-        dump_fh = gzopen64(dump_fn, mode);
-    else
-        dump_fh = gzdopen(f, mode);
-
-    if (dump_fh == Z_NULL)
-        error("Can't open dump file\n%s\n", gzerror(dump_fh, &errno));
-}
-
-u64 dump_flush()
-{
-    gzflush(dump_fh, Z_FINISH);
-    return gzoffset64(dump_fh);
 }
 
 void dump_read(void* buffer, u32 size, char* emsg)
 {
-    if (gzread(dump_fh, buffer, size) != size)
-        error("Can't read dump %s\n%s\n", emsg, gzerror(dump_fh, &errno));
+    if (fread(buffer, 1, size, stdin) != size)
+        error("Can't read %s\n%s\n", emsg, strerror(errno));
 }
 
 void dump_write(void* buffer, u32 size, char* emsg)
 {
-    if (gzwrite(dump_fh, buffer, size) != size)
-        error("Can't write dump %s\n%s\n", emsg, gzerror(dump_fh, &errno));
+    if (fwrite(buffer, 1, size, stdout) != size)
+        error("Can't write %s\n%s\n", emsg, strerror(errno));
 }
 
 void dump_close()
 {
-    gzclose(dump_fh);
+    fflush(stdout);
 }
 
 void* common_malloc(u64 size, char* emsg)
