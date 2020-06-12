@@ -1,5 +1,7 @@
 # backup.e4 (bare metal backup/restore for est4 file systems)
 
+![backup.e4](images/ext4.png)
+
 **backup.e4** is a bare metal backup and restore utility for common Linux ext file systems. It can produce a sector by sector backup image of any ext4 file system which can be later restored to any partition of equal to or greater size.
 
 ## Features
