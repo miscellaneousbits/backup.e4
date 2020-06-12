@@ -26,7 +26,7 @@ LDFLAGS = $(OFLAGS) -Wl,--gc-sections
 
 INSTALLDIR ?= /usr/local/bin
 
-SRC     = $(wildcard *.c)
+SRC     = $(wildcard source/*.c)
 OBJ     = $(SRC:.c=.o)
 DEP     = $(SRC:.c=.d)
 
@@ -58,4 +58,4 @@ install: $(BINB) $(BINR)
 	$(ECHO)sudo ln -sf $(INSTALLDIR)/$(BINB) $(INSTALLDIR)/$(BINR)
 
 clean:
-	@rm -f *.o *.d *.map $(BINR) $(BINB)
+	@rm -f source/*.o source/*.d $(BINR) $(BINB)
