@@ -24,7 +24,7 @@ CFLAGS += -DNDEBUG
 endif
 LDFLAGS = $(OFLAGS) -Wl,--gc-sections
 
-INSTALLDIR = /usr/local/bin
+INSTALLDIR ?= /usr/local/bin
 
 SRC     = $(wildcard *.c)
 OBJ     = $(SRC:.c=.o)
@@ -52,8 +52,8 @@ $(BINR): $(BINB)
 .PHONY: clean install
 
 install: $(BINB) $(BINR)
-	@echo "$(BINB) -> /usr/local/bin"
-	$(ECHO)sudo cp $(BINB) /usr/local/bin
+	@echo "$(BINB) -> $(INSTALLDIR)"
+	$(ECHO)sudo cp $(BINB) $(INSTALLDIR)
 	@echo "$(BINR) -> $(INSTALLDIR)"
 	$(ECHO)sudo ln -sf $(INSTALLDIR)/$(BINB) $(INSTALLDIR)/$(BINR)
 
