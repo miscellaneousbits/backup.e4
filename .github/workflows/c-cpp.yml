@@ -30,6 +30,11 @@ jobs:
         cat test | ./restore.e4 restored.img
         echo "*** check file system ***"
         e2fsck -f -y restored.img
+        echo *** loopback setup ***
+        LOOP1=$(losetup -f)
+        sudo losetup ${LOOP1} data/10M.img
+        LOOP2=$(losetup -f)
+        sudo losetup ${LOOP2} restored.img
         echo "*** Unzip 1G image ***"
         gunzip data/1G.img.gz
         echo "*** backup ***"
