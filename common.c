@@ -19,11 +19,13 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "common.h"
 
 u64 block_count;
-int part_fh = -1;
-u32* part_bm = NULL;
-char* part_fn = NULL;
+char* part_fn;
+u8* blk;
+bm_word_t* part_bm;
+int part_fh;
+u32 first_block;
 u16 block_size;
-u8* blk = NULL;
+ext4_dump_hdr_t hdr;
 
 ext4_dump_hdr_t hdr;
 

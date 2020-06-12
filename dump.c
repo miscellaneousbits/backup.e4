@@ -22,7 +22,6 @@ static u32 part_bm_bytes;
 static u32 group_bm_bytes;
 static u32 blocks_per_group;
 static u32 groups;
-static u32 first_block;
 static u16 desc_size;
 static u8 feature_incompat64;
 
@@ -44,7 +43,7 @@ static u64 copy_group_to_global_bm(u64 group)
     next -= start;
 
     u64 cnt = 0;
-    for (u64 block = 0; block < next - first_block; block++)
+    for (u64 block = 0; block < next; block++)
         if (get_bm_bit(group_bm, block))
         {
             set_bm_bit(part_bm, start + block + first_block);

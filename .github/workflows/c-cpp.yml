@@ -20,36 +20,5 @@ jobs:
         echo "*** Help ***"
         ./backup.e4
         ./restore.e4
-        echo "*** Unzip 10M image ***"
-        gunzip data/10M.img.gz
-        echo "*** backup ***"
-        ./backup.e4 data/10M.img > test
-        echo "*** zero the destination ***"
-        dd if=/dev/zero of=restored.img bs=1024 count=10240
-        echo "*** restore ***"
-        cat test | ./restore.e4 restored.img
-        echo "*** check file system ***"
-        e2fsck -f -y restored.img
-        echo "*** loopback setup ***"
-        LOOP1=$(losetup -f)
-        sudo losetup ${LOOP1} data/10M.img
-        LOOP2=$(losetup -f)
-        sudo losetup ${LOOP2} restored.img
-        mkdir fs1
-        mkdir fs2
-        sudo mount ${LOOP1} fs1
-        sudo mount ${LOOP2} fs2
-        echo "*** compare files ***"
-        sudo diff -qr fs1/ fs2/
-        echo "*** Unzip 1G image ***"
-        gunzip data/1G.img.gz
-        echo "*** backup ***"
-        ./backup.e4 data/1G.img > test
-        echo "*** zero the destination ***"
-        dd if=/dev/zero of=restored.img bs=4096 count=262140
-        echo "*** restore ***"
-        cat test | ./restore.e4 restored.img
-        echo "*** check file system ***"
-        e2fsck -f -y restored.img
-        echo "*** success ***"
-        rm restored.img data/* test
+        test/test 10M
+        test/test 1G

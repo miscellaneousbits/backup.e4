@@ -49,16 +49,14 @@ typedef struct ext4_dump_hdr_s
 typedef u32 bm_word_t;
 #define BM_WORD_BITS (sizeof(bm_word_t) * 8)
 
-extern char* part_fn;
-extern int part_fh;
-
-extern bm_word_t* part_bm;
-extern u8* blk;
-
-extern ext4_dump_hdr_t hdr;
-
 extern u64 block_count;
+extern char* part_fn;
+extern u8* blk;
+extern bm_word_t* part_bm;
+extern int part_fh;
+extern u32 first_block;
 extern u16 block_size;
+extern ext4_dump_hdr_t hdr;
 
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN ||                 \
     defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__THUMBEB__) || \
