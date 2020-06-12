@@ -18,32 +18,32 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #include "dump.h"
 
-static u32 part_bm_bytes;
-static u32 group_bm_bytes;
-static u32 blocks_per_group;
-static u32 groups;
-static u16 desc_size;
-static u8 feature_incompat64;
+static uint32_t part_bm_bytes;
+static uint32_t group_bm_bytes;
+static uint32_t blocks_per_group;
+static uint32_t groups;
+static uint16_t desc_size;
+static uint8_t feature_incompat64;
 
 static bm_word_t* group_bm;
 
-static void part_read_group_bm(u64 block, char* emsg)
+static void part_read_group_bm(uint64_t block, char* emsg)
 {
     part_seek(block * block_size, emsg);
     part_read(group_bm, group_bm_bytes, emsg);
 }
 
 
-static u64 copy_group_to_global_bm(u64 group)
+static uint64_t copy_group_to_global_bm(uint64_t group)
 {
-    u64 start = group * blocks_per_group;
-    u64 next = start + blocks_per_group;
+    uint64_t start = group * blocks_per_group;
+    uint64_t next = start + blocks_per_group;
     if (next > block_count - first_block)
         next = block_count - first_block;
     next -= start;
 
-    u64 cnt = 0;
-    for (u64 block = 0; block < next; block++)
+    uint64_t cnt = 0;
+    for (uint64_t block = 0; block < next; block++)
         if (get_bm_bit(group_bm, block))
         {
             set_bm_bit(part_bm, start + block + first_block);
@@ -83,12 +83,13 @@ static void load_superblock(void)
         le32_to_cpu(INCOMPAT_64BIT);
     block_count = le32_to_cpu(super->s_blocks_count_lo);
     if (!feature_incompat64)
-        block_count |= (u64)le32_to_cpu(super->s_blocks_count_hi) << 32;
+        block_count |= (uint64_t)le32_to_cpu(super->s_blocks_count_hi) << 32;
 
-    part_bm_bytes = (u32)((block_count + 7) / 8);
+    part_bm_bytes = (uint32_t)((block_count + 7) / 8);
     assert((blocks_per_group % 8) == 0);
     group_bm_bytes = blocks_per_group / 8;
-    groups = (u32)((block_count + blocks_per_group - 1) / blocks_per_group);
+    groups =
+        (uint32_t)((block_count + blocks_per_group - 1) / blocks_per_group);
     desc_size = le16_to_cpu(super->s_desc_size);
     if (!feature_incompat64)
         desc_size = EXT4_MIN_DESC_SIZE;
@@ -100,10 +101,10 @@ static void load_superblock(void)
     free(super);
 }
 
-static u64 load_block_group_bitmaps(void)
+static uint64_t load_block_group_bitmaps(void)
 {
     assert(block_size <= 64 * 1024);
-    u32 gd_offset = block_size;
+    uint32_t gd_offset = block_size;
     if (block_size == 1024)
         gd_offset += 1024;
 
@@ -115,12 +116,12 @@ static u64 load_block_group_bitmaps(void)
 
     part_seek(gd_offset, "group descriptors");
     part_read(gds, groups * desc_size, "group descriptors");
-    u64 cnt = 0;
-    for (u32 group = 0; group < groups; group++)
+    uint64_t cnt = 0;
+    for (uint32_t group = 0; group < groups; group++)
     {
-        u64 block_bitmap = le32_to_cpu(gd->bg_block_bitmap_lo);
+        uint64_t block_bitmap = le32_to_cpu(gd->bg_block_bitmap_lo);
         if (desc_size > 32)
-            block_bitmap |= (u64)le32_to_cpu(gd->bg_block_bitmap_hi) << 32;
+            block_bitmap |= (uint64_t)le32_to_cpu(gd->bg_block_bitmap_hi) << 32;
         assert(block_bitmap < block_count);
         part_read_group_bm(block_bitmap, "block bitmap");
         cnt += copy_group_to_global_bm(group);
@@ -149,9 +150,9 @@ static void save_backup(void)
 
     print("Writing data blocks\n");
 
-    u64 block_cnt = 0;
+    uint64_t block_cnt = 0;
 
-    for (u64 block = 0; block < block_count; block++)
+    for (uint64_t block = 0; block < block_count; block++)
     {
         if (get_bm_bit(part_bm, block))
         {
@@ -182,7 +183,7 @@ void dump(void)
     group_bm = common_malloc(group_bm_bytes, "group bitmap");
     blk = common_malloc(block_size, "block");
 
-    u64 cnt = load_block_group_bitmaps();
+    uint64_t cnt = load_block_group_bitmaps();
 
     if (!get_bm_bit(part_bm, 0))
     {

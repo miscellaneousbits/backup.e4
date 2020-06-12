@@ -36,7 +36,7 @@ void restore(void)
     block_size = hdr.block_size;
     block_count = hdr.blocks;
 
-    u32 bm_bytes = (u32)((block_count + 7) / 8);
+    uint32_t bm_bytes = (uint32_t)((block_count + 7) / 8);
 
     part_bm = common_malloc(bm_bytes, "partition bitmap");
     blk = common_malloc(block_size, "block");
@@ -45,9 +45,9 @@ void restore(void)
 
     dump_read(part_bm, bm_bytes, "bitmap");
 
-    u64 cnt = 0;
+    uint64_t cnt = 0;
 
-    for (u64 block = 0; block < block_count; block++)
+    for (uint64_t block = 0; block < block_count; block++)
         cnt += get_bm_bit(part_bm, block);
 
     print("  %'lld blocks in use\n", cnt);
@@ -57,7 +57,7 @@ void restore(void)
     print("Restoring data blocks\n");
 
     cnt = 0;
-    for (u64 block = 0; block < block_count; block++)
+    for (uint64_t block = 0; block < block_count; block++)
     {
         if (get_bm_bit(part_bm, block))
         {

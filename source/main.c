@@ -19,7 +19,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "dump.h"
 #include "restore.h"
 
-u8 b_flag = 1;
+uint8_t b_flag = 1;
 
 static void help(char* prog)
 {

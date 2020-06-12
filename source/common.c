@@ -16,15 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #include "common.h"
 
-u64 block_count;
+uint64_t block_count;
 char* part_fn;
-u8* blk;
+uint8_t* blk;
 bm_word_t* part_bm;
 int part_fh;
-u32 first_block;
-u16 block_size;
+uint32_t first_block;
+uint16_t block_size;
 ext4_dump_hdr_t hdr;
 
 ext4_dump_hdr_t hdr;
@@ -50,7 +51,7 @@ void error(char* fmt, ...)
     exit(-1);
 }
 
-void part_open(u32 write)
+void part_open(uint32_t write)
 {
     ASSERT((write == READ) || (write = WRITE));
     part_fh = open(part_fn,
@@ -59,9 +60,9 @@ void part_open(u32 write)
         error("Can't open partition %s\n%s\n", part_fn, strerror(errno));
 }
 
-static u64 last_offset;
+static uint64_t last_offset;
 
-void part_seek(u64 offset, char* emsg)
+void part_seek(uint64_t offset, char* emsg)
 {
     ASSERT(offset < block_count * block_size);
     ASSERT(part_fh >= 0);
@@ -71,35 +72,31 @@ void part_seek(u64 offset, char* emsg)
             strerror(errno));
 }
 
-void part_read(void* buffer, u32 size, char* emsg)
+void part_read(void* buffer, uint32_t size, char* emsg)
 {
     ASSERT(buffer);
     ASSERT(part_fh >= 0);
+    ASSERT(size);
     if (read(part_fh, buffer, size) != size)
         error("Can't read %s at offset %'lld for %d\n%s\n", emsg, last_offset,
             size, strerror(errno));
 }
 
-void part_read_block(u64 block, char* emsg)
+void part_read_block(uint64_t block, char* emsg)
 {
     ASSERT(block < block_count);
+    ASSERT(part_fh >= 0);
     part_seek(block * block_size, emsg);
     part_read(blk, block_size, emsg);
 }
 
-void part_write(void* buffer, u32 size, char* emsg)
-{
-    ASSERT(buffer);
-    ASSERT(part_fh >= 0);
-    if (write(part_fh, buffer, size) != size)
-        error("Can't write %s\n%s\n", emsg, strerror(errno));
-}
-
-void part_write_block(u64 block, char* emsg)
+void part_write_block(uint64_t block, char* emsg)
 {
     ASSERT(block < block_count);
+    ASSERT(part_fh >= 0);
     part_seek(block * block_size, emsg);
-    part_write(blk, block_size, emsg);
+    if (write(part_fh, blk, block_size) != block_size)
+        error("Can't write %s\n%s\n", emsg, strerror(errno));
 }
 
 void part_close(void)
@@ -108,29 +105,29 @@ void part_close(void)
     close(part_fh);
 }
 
-void dump_open(u32 write)
-{
-}
+void dump_open(uint32_t write) {}
 
-void dump_read(void* buffer, u32 size, char* emsg)
+void dump_read(void* buffer, uint32_t size, char* emsg)
 {
+    ASSERT(buffer);
+    ASSERT(size);
     if (fread(buffer, 1, size, stdin) != size)
         error("Can't read %s\n%s\n", emsg, strerror(errno));
 }
 
-void dump_write(void* buffer, u32 size, char* emsg)
+void dump_write(void* buffer, uint32_t size, char* emsg)
 {
+    ASSERT(buffer);
+    ASSERT(size);
     if (fwrite(buffer, 1, size, stdout) != size)
         error("Can't write %s\n%s\n", emsg, strerror(errno));
 }
 
-void dump_close()
-{
-    fflush(stdout);
-}
+void dump_close(void) {}
 
-void* common_malloc(u64 size, char* emsg)
+void* common_malloc(uint64_t size, char* emsg)
 {
+    ASSERT(size);
     void* p = malloc((size_t)size);
     if (p == NULL)
         error("Can't allocate memory for %s\n%s\n", emsg, strerror(errno));
