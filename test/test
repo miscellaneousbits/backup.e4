@@ -1,0 +1,31 @@
+#!/bin/bash
+echo "*** Unzip 10M image ***"
+cp ../data/$1.img.gz .
+gunzip -f $1.img.gz
+e2fsck -f $1.img
+echo "*** backup ***"
+../backup.e4 $1.img > test.bak
+echo "*** zero the destination ***"
+dd if=/dev/zero of=restored.img count=`stat --printf="%s" $1.img` iflag=count_bytes
+echo "*** restore ***"
+cat test.bak | ../restore.e4 restored.img
+echo "*** check file system ***"
+e2fsck -f -y restored.img
+echo "*** loopback setup ***"
+LOOP1=$(losetup -f)
+sudo losetup ${LOOP1} $1.img
+LOOP2=$(losetup -f)
+sudo losetup ${LOOP2} restored.img
+echo $LOOP1 $LOOP2
+mkdir fs1 fs2
+sudo mount ${LOOP1} fs1
+sudo mount ${LOOP2} fs2
+df -h fs1
+df -h fs2
+echo "*** compare files ***"
+sudo diff -qr fs1/ fs2/
+sudo umount fs1
+sudo umount fs2
+sudo losetup -d $LOOP2
+sudo losetup -d $LOOP1
+rmdir fs1 fs2
