@@ -20,5 +20,5 @@ jobs:
         echo "*** Help ***"
         ./backup.e4
         ./restore.e4
-        test/test 10M
-        test/test 1G
+        test/test 10M random
+        test/test 1G zero
