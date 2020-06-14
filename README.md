@@ -11,6 +11,8 @@
 * Supports restore from stdin.
 * Can be used with compressed and/or encrypted backups.
 
+Want to support this open source project? [Please star it : )](https://github.com/miscellaneousbits/backup.e4)
+
 ## Table of Contents
 
 * [Usage](#usage)
