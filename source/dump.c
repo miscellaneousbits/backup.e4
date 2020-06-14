@@ -71,8 +71,7 @@ static void load_superblock(void)
         error("Can't find super block\n");
 
     if ((le16_to_cpu(super->s_state) & 1) == 0)
-        error("%s was not cleanly unmounted. try\n  sudo e2fsck -f %s\n",
-            part_fn, part_fn);
+        print("WARNING: It is unsafe to backup mounted partition\n");
 
     block_size = 1024u << le32_to_cpu(super->s_log_block_size);
     assert(block_size <= 64 * 1024);
