@@ -43,7 +43,7 @@ void print(char* fmt, ...)
 void error(char* fmt, ...)
 {
     ASSERT(fmt);
-    fprintf(stderr, "\n");
+    fprintf(stderr, "\nFATAL ERROR: ");
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
