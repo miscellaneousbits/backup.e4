@@ -45,14 +45,6 @@ Note: Using no parameters will display help.
 Let's backup a file system on partition /dev/sda3.
 
 ```
-$ sudo backup.e4 /dev/sda3 > sda3_backup
-
-Can't open partition /dev/sda3
-Device or resource busy
-$ # Oops! Can't produce a safe backup of a mounted file system
-$ # Unmount it
-$ sudo umount /dev/sda3
-$ # Try again
 $ sudo backup.e4 /dev/sda3 > sda3.bak
 Backing up partition /dev/sda3
 4,096 bytes per block, 32,768 blocks per group, 52,428,000 blocks, 1,600 groups
@@ -65,7 +57,7 @@ Writing data blocks
 ..................................................................................................................................
 4,244,566 blocks dumped (17,385,742,336 bytes)
 Elapsed time 00:03:11
-$ # Better!
+$
 ```
 Or, we can compress the backup file.
 
