@@ -23,6 +23,7 @@ Want to support this open source project? [Please star it : )](https://github.co
 	* [Install](#install)
 * [Security alert](#security-alert)
 * [Integration build status](#integration-build-status)
+* [Verification](*verification)
 * [Disclaimer](#disclaimer)
 
 ## Usage
@@ -251,6 +252,13 @@ Keep the encrypted key file along with the backup file.
 ## Integration build status
 
 ![C/C++ CI](https://github.com/miscellaneousbits/backup.e4/workflows/C/C++%20CI/badge.svg)
+
+## Verification
+
+Tested and verified on:
+* Raspberry Pi OS (32-bit)
+* Raspberry Pi OS (64-bit beta)
+* Ubuntu 18.04 LTS (x86_64)
 
 ## Disclaimer
 
