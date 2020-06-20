@@ -252,6 +252,13 @@ Keep the encrypted key file along with the backup file.
 
 ![C/C++ CI](https://github.com/miscellaneousbits/backup.e4/workflows/C/C++%20CI/badge.svg)
 
+## Verification
+
+Tested and verified on:
+* Raspberry Pi OS (32-bit)
+* Raspberry Pi OS (64-bit beta)
+* Ubuntu 18.04 LTS (x86_64)
+
 ## Disclaimer
 
 This software is provided "AS IS" and any expressed or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the regents or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.  
