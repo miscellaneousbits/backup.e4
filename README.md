@@ -23,6 +23,7 @@ Want to support this open source project? [Please star it : )](https://github.co
 	* [Install](#install)
 * [Security alert](#security-alert)
 * [Integration build status](#integration-build-status)
+* [Verification](*verification)
 * [Disclaimer](#disclaimer)
 
 ## Usage
