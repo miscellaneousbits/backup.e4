@@ -21,6 +21,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "version.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <locale.h>
@@ -44,6 +45,8 @@ typedef struct ext4_dump_hdr_s
 
 typedef uint32_t bm_word_t;
 #define BM_WORD_BITS (sizeof(bm_word_t) * 8)
+
+extern uint8_t force_flag;
 
 extern uint64_t block_count;
 extern char* part_fn;

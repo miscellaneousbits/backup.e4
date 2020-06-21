@@ -54,8 +54,10 @@ void error(char* fmt, ...)
 void part_open(uint32_t write)
 {
     ASSERT((write == READ) || (write = WRITE));
-    part_fh = open(part_fn,
-        ((write == WRITE) ? (O_WRONLY | O_EXCL) : O_RDONLY) | O_LARGEFILE);
+    part_fh = open(
+        part_fn, ((write == WRITE) ? (O_WRONLY | O_EXCL) :
+                                     (O_RDONLY | (force_flag ? 0 : O_EXCL))) |
+                     O_LARGEFILE);
     if (part_fh < 0)
         error("Can't open partition %s\n%s\n", part_fn, strerror(errno));
 }
