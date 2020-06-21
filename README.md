@@ -28,7 +28,7 @@ Want to support this open source project? [Please star it : )](https://github.co
 
 ## Usage
 
-**backup.e4** has a single command line parameter, the partition path name.
+**backup.e4** has simple command line parameters, the partition path name and an optional flag.
 
 ```
 $ backup.e4 
@@ -200,7 +200,7 @@ make install INSTALLDIR=~/bin
 
 Like any bare metal backup utility **backup.e4** copies file system data verbatim. Dump files will therefore likely contain unencrypted password and private key data. Backup dumps must remain secured at all times. Alternatively the backups should be encrypted.
 
-For example
+For example, using our private and public RSA keys:
 
 ```
 $ # Create random 256 bit password
