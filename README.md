@@ -200,7 +200,7 @@ make install INSTALLDIR=~/bin
 
 Like any bare metal backup utility **backup.e4** copies file system data verbatim. Dump files will therefore likely contain unencrypted password and private key data. Backup dumps must remain secured at all times. Alternatively the backups should be encrypted.
 
-For example, using our private and public RSA keys:
+For example, an encrypted backup using our private and public RSA keys:
 
 ```
 $ # Create random 256 bit password
@@ -220,14 +220,17 @@ Writing data blocks
 ..................................................................................................................................
 4,244,566 blocks dumped (17,385,742,336 bytes)
 Elapsed time 00:07:21
-$ # Clear the password
+$ # Clear the unencrypted password
 $ PASWORD=
 $
 ```
 
-And
+And, to restore:
 
 ```
+$ # Decrypt the password
+$ PASSWORD=$(openssl rsautl -decrypt -inkey ~/.ssh/id_rsa -in sda3.encrypted.key)
+$ # Decrypt and restore the backup
 $ openssl enc -d -aes-256-cbc -in sda3_encrypted.bak -iter 10 -pass pass:$PASSWORD | restore.e4 /dev/sda3
 Restoring partition /dev/sda3
 Reading header
@@ -238,6 +241,8 @@ Restoring data blocks
 ..................................................................................................................................
 4,244,566 blocks restored (17,385,742,336 bytes)
 Elapsed time 00:06:44
+$ # Destroy the unencrypted password
+$ PASSWORD=
 ```
 
 Keep the encrypted key file along with the backup file.
