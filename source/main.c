@@ -19,28 +19,73 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "dump.h"
 #include "restore.h"
 
-uint8_t b_flag = 1;
+uint8_t force_flag = 0;
 
-static void help(char* prog)
+static uint8_t backup_flag = 0;
+static char* prog = NULL;
+
+static void help(void)
 {
-    print("\nUsage: %s extfs_partition_path\n\n", prog);
+    if (backup_flag)
+        print(
+            "\nUsage: %s [-f] extfs_partition_path\n"
+            "    -f Force backup of mounted file system (unsafe)\n\n",
+            prog);
+    else
+        print("\nUsage: %s extfs_partition_path\n\n", prog);
     exit(0);
 }
 
 static void parse_args(int ac, char* av[])
 {
-    char* who = strrchr(av[0], '/');
-    if (who)
-        who++;
+    int index;
+    int c;
+    opterr = 0;
+    prog = strrchr(av[0], '/');
+    if (prog)
+        prog++;
     else
-        who = av[0];
-    if (strcmp(who, "restore.e4") == 0)
-        b_flag = 0;
+        prog = av[0];
+    if (strcmp(prog, "backup.e4") == 0)
+        backup_flag = 1;
 
     if (ac < 2)
-        help(av[0]);
+        help();
 
-    part_fn = av[1];
+    while ((c = getopt(ac, av, "f")) != -1)
+        switch (c)
+        {
+        case 'f':
+            force_flag = 1;
+            break;
+        case '?':
+            if (optopt == 'c')
+            {
+                print("Option -%c requires an argument.\n", optopt);
+                help();
+            }
+            else if (isprint(optopt))
+            {
+                print("Unknown option `-%c'.\n", optopt);
+                help();
+            }
+            else
+            {
+                print("Unknown option character `\\x%x'.\n", optopt);
+                help();
+            }
+        default:
+            help();
+        }
+
+    for (index = optind; index < ac; index++)
+        if (part_fn == NULL)
+            part_fn = av[index];
+        else
+        {
+            print("Extra parameter(s) %s ... ignored\n", av[index]);
+            break;
+        }
 }
 
 int main(int ac, char* av[])
@@ -52,7 +97,7 @@ int main(int ac, char* av[])
 
     time_t start_time = time(NULL);
 
-    b_flag ? dump() : restore();
+    backup_flag ? dump() : restore();
 
     part_close();
     dump_close();
