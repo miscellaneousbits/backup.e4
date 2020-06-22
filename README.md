@@ -33,10 +33,14 @@ Want to support this open source project? [Please star it : )](https://github.co
 ```
 $ backup.e4 
 
+Lincensed under GPLv2.  Jean M. Cyr.  Compiled Jun 21 2020.
+
 Usage: backup.e4 [-f] extfs_partition_path
     -f Force backup of mounted file system (unsafe)
 
 $ restore.e4 
+
+Lincensed under GPLv2.  Jean M. Cyr.  Compiled Jun 21 2020.
 
 Usage: restore.e4 extfs_partition_path
 ```

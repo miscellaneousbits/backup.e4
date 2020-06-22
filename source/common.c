@@ -32,7 +32,7 @@ ext4_dump_hdr_t hdr;
 
 void print(char* fmt, ...)
 {
-    ASSERT(fmt);
+    assert(fmt);
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
@@ -42,7 +42,7 @@ void print(char* fmt, ...)
 
 void error(char* fmt, ...)
 {
-    ASSERT(fmt);
+    assert(fmt);
     fprintf(stderr, "\nFATAL ERROR: ");
     va_list args;
     va_start(args, fmt);
@@ -53,7 +53,8 @@ void error(char* fmt, ...)
 
 void part_open(uint32_t write)
 {
-    ASSERT((write == READ) || (write = WRITE));
+    assert((write == READ) || (write = WRITE));
+
     part_fh = open(
         part_fn, ((write == WRITE) ? (O_WRONLY | O_EXCL) :
                                      (O_RDONLY | (force_flag ? 0 : O_EXCL))) |
@@ -66,8 +67,9 @@ static uint64_t last_offset;
 
 void part_seek(uint64_t offset, char* emsg)
 {
-    ASSERT(offset < block_count * block_size);
-    ASSERT(part_fh >= 0);
+    assert(offset < block_count * block_size);
+    assert(part_fh >= 0);
+
     last_offset = offset;
     if (lseek64(part_fh, offset, SEEK_SET) != offset)
         error("Can't seek for %s at 0x%'llx\n%s\n", emsg, offset,
@@ -76,9 +78,10 @@ void part_seek(uint64_t offset, char* emsg)
 
 void part_read(void* buffer, uint32_t size, char* emsg)
 {
-    ASSERT(buffer);
-    ASSERT(part_fh >= 0);
-    ASSERT(size);
+    assert(buffer);
+    assert(part_fh >= 0);
+    assert(size);
+
     if (read(part_fh, buffer, size) != size)
         error("Can't read %s at offset %'lld for %d\n%s\n", emsg, last_offset,
             size, strerror(errno));
@@ -86,16 +89,18 @@ void part_read(void* buffer, uint32_t size, char* emsg)
 
 void part_read_block(uint64_t block, char* emsg)
 {
-    ASSERT(block < block_count);
-    ASSERT(part_fh >= 0);
+    assert(block < block_count);
+    assert(part_fh >= 0);
+
     part_seek(block * block_size, emsg);
     part_read(blk, block_size, emsg);
 }
 
 void part_write_block(uint64_t block, char* emsg)
 {
-    ASSERT(block < block_count);
-    ASSERT(part_fh >= 0);
+    assert(block < block_count);
+    assert(part_fh >= 0);
+
     part_seek(block * block_size, emsg);
     if (write(part_fh, blk, block_size) != block_size)
         error("Can't write %s\n%s\n", emsg, strerror(errno));
@@ -103,7 +108,8 @@ void part_write_block(uint64_t block, char* emsg)
 
 void part_close(void)
 {
-    ASSERT(part_fh >= 0);
+    assert(part_fh >= 0);
+
     close(part_fh);
 }
 
@@ -111,16 +117,18 @@ void dump_open(uint32_t write) {}
 
 void dump_read(void* buffer, uint32_t size, char* emsg)
 {
-    ASSERT(buffer);
-    ASSERT(size);
+    assert(buffer);
+    assert(size);
+
     if (fread(buffer, 1, size, stdin) != size)
         error("Can't read %s\n%s\n", emsg, strerror(errno));
 }
 
 void dump_write(void* buffer, uint32_t size, char* emsg)
 {
-    ASSERT(buffer);
-    ASSERT(size);
+    assert(buffer);
+    assert(size);
+
     if (fwrite(buffer, 1, size, stdout) != size)
         error("Can't write %s\n%s\n", emsg, strerror(errno));
 }
@@ -129,7 +137,8 @@ void dump_close(void) {}
 
 void* common_malloc(uint64_t size, char* emsg)
 {
-    ASSERT(size);
+    assert(size);
+
     void* p = malloc((size_t)size);
     if (p == NULL)
         error("Can't allocate memory for %s\n%s\n", emsg, strerror(errno));

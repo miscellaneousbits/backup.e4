@@ -33,8 +33,6 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include <time.h>
 #include <unistd.h>
 
-#define ASSERT assert
-
 typedef struct ext4_dump_hdr_s
 {
     uint64_t blocks;

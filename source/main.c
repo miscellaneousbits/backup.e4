@@ -26,13 +26,15 @@ static char* prog = NULL;
 
 static void help(void)
 {
+    print("\nLincensed under GPLv2.  Jean M. Cyr.  Compiled " __DATE__ ".\n\n");
     if (backup_flag)
         print(
-            "\nUsage: %s [-f] extfs_partition_path\n"
-            "    -f Force backup of mounted file system (unsafe)\n\n",
+            "Usage: %s [-f] extfs_partition_path\n"
+            "    -f Force backup of mounted file system (unsafe)",
             prog);
     else
-        print("\nUsage: %s extfs_partition_path\n\n", prog);
+        print("Usage: %s extfs_partition_path", prog);
+    print("\n\n");
     exit(0);
 }
 
@@ -83,8 +85,8 @@ static void parse_args(int ac, char* av[])
             part_fn = av[index];
         else
         {
-            print("Extra parameter(s) %s ... ignored\n", av[index]);
-            break;
+            print("Extra parameter(s) %s ...\n", av[index]);
+            help();
         }
 }
 
@@ -103,16 +105,12 @@ int main(int ac, char* av[])
     dump_close();
 
     time_t elapsed = time(NULL) - start_time;
-	struct tm t;
-    t.tm_sec = elapsed % 60;
+    int sec = elapsed % 60;
     elapsed /= 60;
-    t.tm_min = elapsed % 60;
+    int min = elapsed % 60;
     elapsed /= 60;
-	t.tm_hour = elapsed;
-
-	char buffer[16];
-	strftime(buffer, sizeof(buffer), "%X", &t);
-    print("Elapsed time %s\n", buffer);
+    int hour = elapsed;
+    print("Elapsed time %d:%02d:%02d\n", hour, min, sec);
 
     return 0;
 }
