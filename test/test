@@ -1,14 +1,9 @@
-echo "*** Decompress $1 image ***"
 gunzip -k test/$1.img.gz
-echo "*** backup $1 image ***"
-./backup.e4 test/$1.img > test.bak
-echo "*** randomize the test image ***"
+[ "$2" = "yes" ] && ./backup.e4 -c 1 test/$1.img > test.bak
+[ "$2" = "no" ] && ./backup.e4 test/$1.img > test.bak
 truncate -s $(stat --printf="%s" test/$1.img) restored.img
-echo "*** restore test image ***"
 cat test.bak | ./restore.e4 restored.img
-echo "*** check test image file system file system ***"
 e2fsck -f -n restored.img
-echo "*** loopback setup ***"
 LOOP1=$(losetup -f)
 sudo losetup $LOOP1 test/$1.img
 LOOP2=$(losetup -f)
@@ -17,10 +12,8 @@ sudo losetup $LOOP2 restored.img
 [ ! -d "fs2" ] && mkdir fs2
 sudo mount $LOOP1 fs1
 sudo mount $LOOP2 fs2
-echo "*** compare files ***"
 sudo diff -qr --no-dereference fs1/ fs2/
 sudo umount fs1 fs2
-rmdir fs1 fs2
 sudo losetup -d $LOOP1
 sudo losetup -d $LOOP2
 rm restored.img test/$1.img test.bak

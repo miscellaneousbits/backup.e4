@@ -20,6 +20,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "restore.h"
 
 uint8_t force_flag = 0;
+uint8_t compr_flag = 0;
 
 static uint8_t backup_flag = 0;
 static char* prog = NULL;
@@ -31,7 +32,8 @@ static void help(void)
         L_ENDIAN ? "little" : "big");
     if (backup_flag)
         print(
-            "%s [-f] extfs_partition_path\n"
+            "%s [-c 0-9] [-f] extfs_partition_path\n"
+            "    -c Compression level (0-none, 1-low, 9-high)\n"
             "    -f Force backup of mounted file system (unsafe)",
             prog);
     else
@@ -40,44 +42,41 @@ static void help(void)
     exit(0);
 }
 
+static const char* backup_name = STRING_PARM(BINB);
+static const char* restore_name = STRING_PARM(BINR);
+
 static void parse_args(int ac, char* av[])
 {
     int index;
     int c;
-    opterr = 0;
-    prog = strrchr(av[0], '/');
-    if (prog)
-        prog++;
-    else
-        prog = av[0];
-    if (strcmp(prog, "backup.e4") == 0)
+
+    if (strcmp(prog, backup_name) == 0)
         backup_flag = 1;
 
     if (ac < 2)
         help();
 
-    while ((c = getopt(ac, av, "f")) != -1)
+    if (!backup_flag && strcmp(prog, restore_name))
+        error("I don't recognize myself!\n");
+
+    opterr = 0;
+
+    while ((c = getopt(ac, av, "c:f")) != -1)
         switch (c)
         {
         case 'f':
             force_flag = 1;
             break;
+        case 'c':
+            if ((strlen(optarg) != 1) || (optarg[0] < '0') || (optarg[0] > '9'))
+            {
+                print("Compression level must be between 0 and 9\n");
+                help();
+            }
+            compr_flag = optarg[0] - '0';
+            break;
         case '?':
-            if (optopt == 'c')
-            {
-                print("Option -%c requires an argument.\n", optopt);
-                help();
-            }
-            else if (isprint(optopt))
-            {
-                print("Unknown option `-%c'.\n", optopt);
-                help();
-            }
-            else
-            {
-                print("Unknown option character `\\x%x'.\n", optopt);
-                help();
-            }
+            print("Unknown option `-%c'.\n", optopt);
         default:
             help();
         }
@@ -95,7 +94,12 @@ static void parse_args(int ac, char* av[])
 int main(int ac, char* av[])
 {
     setlocale(LC_NUMERIC, "");
-    setlocale(LC_TIME, "");
+
+    prog = strrchr(av[0], '/');
+    if (prog)
+        prog++;
+    else
+        prog = av[0];
 
     parse_args(ac, av);
 

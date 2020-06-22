@@ -35,6 +35,9 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #define BACKUP_MAGIC 0xe4bae4ba
 
+#define STRINGIZE(x) #x
+#define STRING_PARM(x) STRINGIZE(x)
+
 typedef struct ext4_dump_hdr_s
 {
     uint64_t blocks;
@@ -47,6 +50,7 @@ typedef uint32_t bm_word_t;
 #define BM_WORD_BITS (sizeof(bm_word_t) * 8)
 
 extern uint8_t force_flag;
+extern uint8_t compr_flag;
 
 extern uint64_t block_count;
 extern char* part_fn;

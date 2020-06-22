@@ -34,6 +34,7 @@ void print(char* fmt, ...)
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
+    va_end(args);
     fflush(stderr);
 }
 
@@ -44,6 +45,7 @@ void error(char* fmt, ...)
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
+    va_end(args);
     exit(-1);
 }
 
@@ -105,14 +107,24 @@ void part_close(void)
     close(part_fh);
 }
 
-void dump_open(uint32_t write) {}
+static FILE* dump_fd = NULL;
+
+void dump_open(uint32_t write)
+{
+    assert((write == READ) || (write = WRITE));
+
+    dump_fd = (write == WRITE) ? stdout : stdin;
+    if (dump_fd == NULL)
+        error("can't open %s\n", write ? "stdout" : "stdin");
+}
 
 void dump_read(void* buffer, uint32_t size, char* emsg)
 {
     assert(buffer);
     assert(size);
+    assert(dump_fd);
 
-    if (fread(buffer, 1, size, stdin) != size)
+    if (fread(buffer, 1, size, dump_fd) != size)
         error("Can't read %s\n%s\n", emsg, strerror(errno));
 }
 
@@ -120,12 +132,18 @@ void dump_write(void* buffer, uint32_t size, char* emsg)
 {
     assert(buffer);
     assert(size);
+    assert(dump_fd);
 
-    if (fwrite(buffer, 1, size, stdout) != size)
+    if (fwrite(buffer, 1, size, dump_fd) != size)
         error("Can't write %s\n%s\n", emsg, strerror(errno));
 }
 
-void dump_close(void) {}
+void dump_close(void)
+{
+    assert(dump_fd);
+
+    fclose(dump_fd);
+}
 
 void* common_malloc(uint64_t size, char* emsg)
 {
