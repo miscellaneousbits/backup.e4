@@ -3,7 +3,7 @@ gunzip -k test/$1.img.gz
 echo "*** backup $1 image ***"
 ./backup.e4 test/$1.img > test.bak
 echo "*** randomize the test image ***"
-dd if=/dev/$2 of=restored.img count=`stat --printf="%s" test/$1.img` iflag=count_bytes
+truncate -s $(stat --printf="%s" test/$1.img) restored.img
 echo "*** restore test image ***"
 cat test.bak | ./restore.e4 restored.img
 echo "*** check test image file system file system ***"
