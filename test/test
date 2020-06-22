@@ -1,34 +1,19 @@
-echo CMD: gunzip -k test/$1.img.gz
 gunzip -k test/$1.img.gz
-[ "$2" = "yes" ] && echo CMD: ./backup.e4 -c 1 test/$1.img \> test.bak
 [ "$2" = "yes" ] && ./backup.e4 -c 1 test/$1.img > test.bak
-[ "$2" = "no" ] && echo CMD: ./backup.e4 test/$1.img \> test.bak
 [ "$2" = "no" ] && ./backup.e4 test/$1.img > test.bak
-echo CMD: truncate -s $(stat --printf="%s" test/$1.img) restored.img
 truncate -s $(stat --printf="%s" test/$1.img) restored.img
-echo CMD: cat test.bak \| ./restore.e4 restored.img
 cat test.bak | ./restore.e4 restored.img
-echo CMD: e2fsck -f -n restored.img
 e2fsck -f -n restored.img
 LOOP1=$(losetup -f)
-echo CMD: sudo losetup $LOOP1 test/$1.img
 sudo losetup $LOOP1 test/$1.img
 LOOP2=$(losetup -f)
-echo CMD: sudo losetup $LOOP2 restored.img
 sudo losetup $LOOP2 restored.img
 [ ! -d "fs1" ] && mkdir fs1
 [ ! -d "fs2" ] && mkdir fs2
-echo CMD: sudo mount $LOOP1 fs1
 sudo mount $LOOP1 fs1
-echo CMD: sudo mount $LOOP2 fs2
 sudo mount $LOOP2 fs2
-echo CMD: sudo diff -qr --no-dereference fs1/ fs2/
 sudo diff -qr --no-dereference fs1/ fs2/
-echo CMD: sudo umount fs1 fs2
 sudo umount fs1 fs2
-echo CMD: sudo losetup -d $LOOP1
 sudo losetup -d $LOOP1
-echo CMD: sudo losetup -d $LOOP2
 sudo losetup -d $LOOP2
-echo CMD: rm restored.img test/$1.img test.bak
 rm restored.img test/$1.img test.bak
