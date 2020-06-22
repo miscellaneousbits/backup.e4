@@ -19,8 +19,8 @@ sudo mount $LOOP1 fs1
 sudo mount $LOOP2 fs2
 echo "*** compare files ***"
 sudo diff -qr --no-dereference fs1/ fs2/
-sudo umount fs1
-sudo umount fs2
+sudo umount fs1 fs2
+rmdir fs1 fs2
 sudo losetup -d $LOOP1
 sudo losetup -d $LOOP2
 rm restored.img test/$1.img test.bak
