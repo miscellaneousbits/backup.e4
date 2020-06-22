@@ -32,9 +32,6 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#if __GNUC__
-#include <byteswap.h>
-#endif
 
 #define BACKUP_MAGIC 0xe4bae4ba
 
@@ -67,10 +64,12 @@ extern ext4_dump_hdr_t hdr;
 
 // Big endian
 
+#define L_ENDIAN 0
+
 static inline uint16_t le16_to_cpu(uint16_t v)
 {
 #if __GNUC__
-    return bswap_16(v);
+    return __builtin_bswap16(v);
 #else
     return (v >> 8) | (v << 8);
 #endif
@@ -79,7 +78,7 @@ static inline uint16_t le16_to_cpu(uint16_t v)
 static inline uint32_t le32_to_cpu(uint32_t v)
 {
 #if __GNUC__
-    return bswap_32(v);
+    return __builtin_bswap32(v);
 #else
     return (v >> 24) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) |
            (v << 24);
@@ -89,7 +88,7 @@ static inline uint32_t le32_to_cpu(uint32_t v)
 static inline uint64_t le64_to_cpu(uint64_t v)
 {
 #if __GNUC__
-    return bswap_64(v);
+    return __builtin_bswap64(v);
 #else
     v = ((v << 8) & 0xFF00FF00FF00FF00ULL) | ((v >> 8) & 0x00FF00FF00FF00FFULL);
     v = ((v << 16) & 0xFFFF0000FFFF0000ULL) |
@@ -113,6 +112,8 @@ static inline void set_bm_bit(bm_word_t* bm, uint64_t index)
 #else
 
 // Little endian
+
+#define L_ENDIAN 1
 
 static inline uint16_t le16_to_cpu(uint16_t v)
 {

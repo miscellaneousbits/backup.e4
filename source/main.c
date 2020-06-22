@@ -26,7 +26,9 @@ static char* prog = NULL;
 
 static void help(void)
 {
-    print("\nLincensed under GPLv2.  Jean M. Cyr.  Compiled " __DATE__ ".\n\n");
+    print("\nVersion " BACKUP_E4_VERSION ". Compiled %s-endian " __DATE__
+          "\nLincensed under GPLv2.  Author Jean M. Cyr.\n\n",
+        L_ENDIAN ? "little" : "big");
     if (backup_flag)
         print(
             "Usage: %s [-f] extfs_partition_path\n"
