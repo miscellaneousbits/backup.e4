@@ -32,6 +32,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <zlib.h>
 
 #define BACKUP_MAGIC 0xe4bae4ba
 
@@ -164,6 +165,7 @@ void part_close(void);
 void dump_open(uint32_t write);
 void dump_read(void* buffer, uint32_t size, char* emsg);
 void dump_write(void* buffer, uint32_t size, char* emsg);
+uint64_t dump_end(void);
 void dump_close(void);
 
 void* common_malloc(uint64_t size, char* emsg);

@@ -23,7 +23,7 @@ CFLAGS += -DBINB=$(BINB) -DBINR=$(BINR)
 ifeq ($(DEBUG), 0)
 CFLAGS += -DNDEBUG
 endif
-LDFLAGS = $(OFLAGS) -Wl,--gc-sections
+LDFLAGS = $(OFLAGS) -Wl,--gc-sections -lz
 
 INSTALLDIR ?= /usr/local/bin
 
