@@ -27,15 +27,15 @@ static char* prog = NULL;
 static void help(void)
 {
     print("\nVersion " BACKUP_E4_VERSION ". Compiled %s-endian " __DATE__
-          "\nLincensed under GPLv2.  Author Jean M. Cyr.\n\n",
+          "\nLincensed under GPLv2.  Author Jean M. Cyr.\n\nUsage: ",
         L_ENDIAN ? "little" : "big");
     if (backup_flag)
         print(
-            "Usage: %s [-f] extfs_partition_path\n"
+            "%s [-f] extfs_partition_path\n"
             "    -f Force backup of mounted file system (unsafe)",
             prog);
     else
-        print("Usage: %s extfs_partition_path", prog);
+        print("%s extfs_partition_path", prog);
     print("\n\n");
     exit(0);
 }
