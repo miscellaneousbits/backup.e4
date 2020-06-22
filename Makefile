@@ -3,7 +3,7 @@ BINR    = restore.e4
 CC      = gcc
 STRIP   = strip
 
-DEBUG  ?= 1
+DEBUG  ?= 0
 INTEGRATION ?= 0
 
 ifeq ($(DEBUG), 1)

@@ -28,15 +28,12 @@ uint32_t first_block;
 uint16_t block_size;
 ext4_dump_hdr_t hdr;
 
-ext4_dump_hdr_t hdr;
-
 void print(char* fmt, ...)
 {
     assert(fmt);
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
-    va_end(args);
     fflush(stderr);
 }
 
@@ -47,7 +44,6 @@ void error(char* fmt, ...)
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
-    va_end(args);
     exit(-1);
 }
 
@@ -63,14 +59,11 @@ void part_open(uint32_t write)
         error("Can't open partition %s\n%s\n", part_fn, strerror(errno));
 }
 
-static uint64_t last_offset;
-
 void part_seek(uint64_t offset, char* emsg)
 {
     assert(offset < block_count * block_size);
     assert(part_fh >= 0);
 
-    last_offset = offset;
     if (lseek64(part_fh, offset, SEEK_SET) != offset)
         error("Can't seek for %s at 0x%'llx\n%s\n", emsg, offset,
             strerror(errno));
@@ -83,8 +76,7 @@ void part_read(void* buffer, uint32_t size, char* emsg)
     assert(size);
 
     if (read(part_fh, buffer, size) != size)
-        error("Can't read %s at offset %'lld for %d\n%s\n", emsg, last_offset,
-            size, strerror(errno));
+        error("Can't read %s\n%s\n", emsg, strerror(errno));
 }
 
 void part_read_block(uint64_t block, char* emsg)
