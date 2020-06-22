@@ -138,7 +138,8 @@ static void save_backup(void)
     hdr.blocks = le64_to_cpu(block_count);
     hdr.block_size = le32_to_cpu(block_size);
     hdr.magic = le32_to_cpu(BACKUP_MAGIC);
-    strcpy((char*)&hdr.version, BACKUP_E4_VERSION);
+    memcpy((char*)&hdr.version, BACKUP_E4_VERSION, 3);
+    ((char*)&hdr.version)[3] = 0;
 
     dump_write(&hdr, sizeof(hdr), "header");
 
