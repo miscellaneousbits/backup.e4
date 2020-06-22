@@ -32,6 +32,11 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#if __GNUC__
+#include <byteswap.h>
+#endif
+
+#define BACKUP_MAGIC 0xe4bae4ba
 
 typedef struct ext4_dump_hdr_s
 {
@@ -60,26 +65,69 @@ extern ext4_dump_hdr_t hdr;
     defined(__AARCH64EB__) || defined(_MIBSEB) || defined(__MIBSEB) ||       \
     defined(__MIBSEB__)
 
-#define le16_to_cpu(v) ((v >> 8) | (v << 8))
-#define le32_to_cpu(v) \
-    ((v >> 24) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) | (v << 24))
+// Big endian
+
+static inline uint16_t le16_to_cpu(uint16_t v)
+{
+#if __GNUC__
+    return bswap_16(v);
+#else
+    return (v >> 8) | (v << 8);
+#endif
+}
+
+static inline uint32_t le32_to_cpu(uint32_t v)
+{
+#if __GNUC__
+    return bswap_32(v);
+#else
+    return (v >> 24) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) |
+           (v << 24);
+#endif
+}
+
+static inline uint64_t le64_to_cpu(uint64_t v)
+{
+#if __GNUC__
+    return bswap_64(v);
+#else
+    v = ((v << 8) & 0xFF00FF00FF00FF00ULL) | ((v >> 8) & 0x00FF00FF00FF00FFULL);
+    v = ((v << 16) & 0xFFFF0000FFFF0000ULL) |
+        ((v >> 16) & 0x0000FFFF0000FFFFULL);
+    return (v << 32) | (v >> 32);
+#endif
+}
 
 static inline uint32_t get_bm_bit(bm_word_t* bm, uint64_t index)
 {
     assert(index < block_count);
-    return (bm[index / BM_ENTRY_BITS] << (index % BM_ENTRY_BITS)) & 1;
+    return (bm[index / BM_WORD_BITS] << (index % BM_WORD_BITS)) & 1;
 }
 
 static inline void set_bm_bit(bm_word_t* bm, uint64_t index)
 {
     assert(index < block_count);
-    bm[index / BM_ENTRY_BITS] |= 1 >> (index % BM_ENTRY_BITS);
+    bm[index / BM_WORD_BITS] |= 1 >> (index % BM_WORD_BITS);
 }
 
 #else
 
-#define le16_to_cpu(v) (v)
-#define le32_to_cpu(v) (v)
+// Little endian
+
+static inline uint16_t le16_to_cpu(uint16_t v)
+{
+    return v;
+}
+
+static inline uint32_t le32_to_cpu(uint32_t v)
+{
+    return v;
+}
+
+static inline uint64_t le64_to_cpu(uint64_t v)
+{
+    return v;
+}
 
 static inline uint32_t get_bm_bit(bm_word_t* bm, uint64_t index)
 {

@@ -28,13 +28,13 @@ void restore(void)
 
     dump_read(&hdr, sizeof(hdr), "header");
 
-    if (hdr.magic != 0xe4bae4ba)
+    if (hdr.magic != le32_to_cpu(BACKUP_MAGIC))
         error("Not dump file\n");
 
     print("Bytes per block %'d, %'lld blocks\n", hdr.block_size, hdr.blocks);
 
-    block_size = hdr.block_size;
-    block_count = hdr.blocks;
+    block_size = le32_to_cpu(hdr.block_size);
+    block_count = le64_to_cpu(hdr.blocks);
 
     uint32_t bm_bytes = (uint32_t)((block_count + 7) / 8);
 

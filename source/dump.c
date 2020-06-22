@@ -71,15 +71,14 @@ static void load_superblock(void)
         error("Can't find super block\n");
 
     if ((le16_to_cpu(super->s_state) & 1) == 0)
-        print("WARNING: It is unsafe to backup mounted partition\n");
+        print("WARNING: partition was not cleanly unmounted\n");
 
     block_size = 1024u << le32_to_cpu(super->s_log_block_size);
     assert(block_size <= 64 * 1024);
     blocks_per_group = le32_to_cpu(super->s_blocks_per_group);
 
     feature_incompat64 =
-        (super->s_feature_incompat & le32_to_cpu(INCOMPAT_64BIT)) ==
-        le32_to_cpu(INCOMPAT_64BIT);
+        (super->s_feature_incompat & le32_to_cpu(INCOMPAT_64BIT)) != 0;
     block_count = le32_to_cpu(super->s_blocks_count_lo);
     if (!feature_incompat64)
         block_count |= (uint64_t)le32_to_cpu(super->s_blocks_count_hi) << 32;
@@ -119,7 +118,7 @@ static uint64_t load_block_group_bitmaps(void)
     for (uint32_t group = 0; group < groups; group++)
     {
         uint64_t block_bitmap = le32_to_cpu(gd->bg_block_bitmap_lo);
-        if (desc_size > 32)
+        if (desc_size > EXT4_MIN_DESC_SIZE)
             block_bitmap |= (uint64_t)le32_to_cpu(gd->bg_block_bitmap_hi) << 32;
         assert(block_bitmap < block_count);
         part_read_group_bm(block_bitmap, "block bitmap");
@@ -136,9 +135,9 @@ static void save_backup(void)
 {
     print("Writing header\n");
 
-    hdr.blocks = block_count;
-    hdr.block_size = block_size;
-    hdr.magic = 0xe4bae4ba;
+    hdr.blocks = le64_to_cpu(block_count);
+    hdr.block_size = le32_to_cpu(block_size);
+    hdr.magic = le32_to_cpu(BACKUP_MAGIC);
     strcpy((char*)&hdr.version, BACKUP_E4_VERSION);
 
     dump_write(&hdr, sizeof(hdr), "header");
