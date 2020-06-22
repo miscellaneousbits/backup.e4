@@ -58,8 +58,6 @@ static void load_superblock(void)
     ext4_super_block_t* super =
         common_malloc(sizeof(ext4_super_block_t), "super block");
 
-    print("Backing up partition %s\n", part_fn);
-
     // Fake values for now
     block_count = 2;
     block_size = 1024;
@@ -168,6 +166,11 @@ static void save_backup(void)
 
 void dump(void)
 {
+    print("Backing up partition %s", part_fn);
+    if (compr_flag)
+        print(", with compression level %d", compr_flag);
+    print("\n");
+
     part_open(READ);
 
     load_superblock();

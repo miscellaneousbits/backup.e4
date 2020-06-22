@@ -19,6 +19,7 @@ ECHO    =
 endif
 
 CFLAGS  = $(OFLAGS) -Wall -fdata-sections -ffunction-sections -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+CFLAGS += -DBINB=$(BINB) -DBINR=$(BINR)
 ifeq ($(DEBUG), 0)
 CFLAGS += -DNDEBUG
 endif
