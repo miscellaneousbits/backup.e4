@@ -160,8 +160,15 @@ static void save_backup(void)
         }
     }
 
-    print("\n%'lld blocks dumped (%'lld bytes)\n", block_cnt,
+    print("\n%'lld blocks dumped (%'lld bytes", block_cnt,
         block_cnt * block_size);
+    if (compr_flag)
+    {
+        int64_t b = dump_end();
+        if (b > 0)
+            print(", compressed to %'lld bytes", dump_end());
+    }
+    print(")\n");
 }
 
 void dump(void)

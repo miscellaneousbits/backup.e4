@@ -9,7 +9,7 @@
 * Only saves sectors that are in use.
 * Supports backup to stdout.
 * Supports restore from stdin.
-* Can be used with compressed and/or encrypted backups.
+* Can automatically compress and decompress backups.
 
 Want to support this open source project? [Please star it : )](https://github.com/miscellaneousbits/backup.e4)
 
@@ -31,18 +31,23 @@ Want to support this open source project? [Please star it : )](https://github.co
 **backup.e4** has simple command line parameters, the partition path name and an optional flag.
 
 ```
-$ backup.e4 
+$ backup.e4
 
-Lincensed under GPLv2.  Jean M. Cyr.  Compiled Jun 21 2020.
+Version 1.3-dev. Compiled little-endian Jun 22 2020
+Lincensed under GPLv2.  Author Jean M. Cyr.
 
-Usage: backup.e4 [-f] extfs_partition_path
+Usage: backup.e4 [-c 0-9] [-f] extfs_partition_path
+    -c Compression level (0-none, 1-low, 9-high)
     -f Force backup of mounted file system (unsafe)
 
 $ restore.e4 
 
-Lincensed under GPLv2.  Jean M. Cyr.  Compiled Jun 21 2020.
+Version 1.3-dev. Compiled little-endian Jun 22 2020
+Lincensed under GPLv2.  Author Jean M. Cyr.
 
 Usage: restore.e4 extfs_partition_path
+
+$
 ```
 
 Note: Using no parameters will display help.
@@ -50,41 +55,43 @@ Note: Using no parameters will display help.
 Let's backup a file system on partition /dev/sda3.
 
 ```
-$ sudo backup.e4 /dev/sda3 > sda3.bak
+$ backup.e4 /dev/sda3 > sda3.bak
 Backing up partition /dev/sda3
 4,096 bytes per block, 32,768 blocks per group, 52,428,000 blocks, 1,600 groups
   32 bytes per descriptor
 Scanning block groups
-  4,244,566 blocks in use
+  1,707,113 blocks in use
 Writing header
 Writing partition bitmap
 Writing data blocks
-..................................................................................................................................
-4,244,566 blocks dumped (17,385,742,336 bytes)
-Elapsed time 00:03:11
+.....................................................
+1,707,113 blocks dumped (6,992,334,848 bytes)
+Elapsed time 0:01:21
 $
 ```
 Or, we can compress the backup file.
 
 ```
-$ sudo backup.e4 /dev/sda3 | gzip -1 -q > sda3_compressed.bak
-Backing up partition /dev/sda3
+$ backup.e4 -c 1 /dev/sda3 > sda3.bgz
+Backing up partition /dev/sda3, with compression level 1
 4,096 bytes per block, 32,768 blocks per group, 52,428,000 blocks, 1,600 groups
   32 bytes per descriptor
 Scanning block groups
-  4,244,566 blocks in use
+  1,707,113 blocks in use
 Writing header
 Writing partition bitmap
 Writing data blocks
-..................................................................................................................................
-4,244,566 blocks dumped (17,385,742,336 bytes)
-Elapsed time 00:05:16
+.....................................................
+1,707,113 blocks dumped (6,992,334,848 bytes, compressed to 1,240,349,478 bytes)
+Elapsed time 0:02:51
+$
 ```
 
 ```
-$ ls -alh sda3*.bak
--rw-r--r-- 1 pi pi  17G Jun 12 18:39 sda3.bak
--rw-r--r-- 1 pi pi 705M Jun 12 18:57 sda3_compressed.bak
+$ ls -alh sda3.*
+-rw-r--r-- 1 root root 6.6G Jun 22 20:09 sda3.bak
+-rw-r--r-- 1 root root 1.2G Jun 22 20:14 sda3.bgz
+$
 ```
 
 Compression is slower but reduces dump file size considerably!
@@ -92,37 +99,44 @@ Compression is slower but reduces dump file size considerably!
 Now let's try to restore, but first wipe the existing partition.
 
 ```
-$ sudo dd if=/dev/zero of=/dev/sda3 bs=64K 
+$ dd if=/dev/zero of=/dev/sda3 bs=64K
 dd: error writing '/dev/sda3': No space left on device
 3276751+0 records in
 3276750+0 records out
-214745088000 bytes (215 GB, 200 GiB) copied, 652.373 s, 329 MB/s
+214745088000 bytes (215 GB, 200 GiB) copied, 655.281 s, 328 MB/s
 $
-$ cat sda3.bak | restore.e4 /dev/sda3
+```
+
+```
+$ cat sda3.bgz | restore.e4 /dev/sda3
 Restoring partition /dev/sda3
 Reading header
 Bytes per block 4,096, 52,428,000 blocks
 Reading bitmap
-  4,244,566 blocks in use
+  1,707,113 blocks in use
 Restoring data blocks
-..................................................................................................................................
-4,244,566 blocks restored (17,385,742,336 bytes)
-Elapsed time 00:02:48
-$ sudo e2fsck -f /dev/sda3
+.....................................................
+1,707,113 blocks restored (6,992,334,848 bytes)
+Elapsed time 0:01:17
+$
+```
+
+Check the restored partition:
+
+
+```
+$ e2fsck -f /dev/sda3
 e2fsck 1.44.5 (15-Dec-2018)
 Pass 1: Checking inodes, blocks, and sizes
 Pass 2: Checking directory structure
 Pass 3: Checking directory connectivity
 Pass 4: Checking reference counts
 Pass 5: Checking group summary information
-rootfs: 55420/12876800 files (0.2% non-contiguous), 4244566/52428000 blocks
+rootfs: 109549/12928000 files (0.2% non-contiguous), 1707113/52428000 blocks
+$
 ```
 
-Looks good! For a compressed file you could use:
-
-```
-gunzip -cq sda3_compressed.bak | restore.e4 /dev/sda3
-```
+Looks good!
 
 ### Using pipes
 
@@ -131,33 +145,35 @@ Great flexibility is achieved through the use of stdin and stdout pipes.
 For example, you could use them to send your backup to a remote location.
 
 ```
-$ backup.e4 /dev/sda3 | gzip -cq1 | ssh user@vm-ubuntu.localdomain "cat > sda3.bak"
-Backing up partition /dev/sda3
+$ backup.e4 -c 1 /dev/sda3 | ssh userid@vm-ubuntu.localdomain "cat > sda3.bgz"
+Backing up partition /dev/sda3, with compression level 1
 4,096 bytes per block, 32,768 blocks per group, 52,428,000 blocks, 1,600 groups
   32 bytes per descriptor
 Scanning block groups
-  4,244,566 blocks in use
+  1,707,113 blocks in use
 Writing header
 Writing partition bitmap
 Writing data blocks
-..................................................................................................................................
-4,244,566 blocks dumped (17,385,742,336 bytes)
-Elapsed time 00:05:17
+.....................................................
+1,707,113 blocks dumped (6,992,334,848 bytes)
+Elapsed time 0:02:57
+$ 
 ```
 
 Now, restore from remote.
 
 ```
-$ scp user@vm-ubuntu:sda3.bak /dev/stdout | gunzip -cq | restore.e4 /dev/sda3
+$ scp userid@vm-ubuntu:sda3.bgz /dev/stdout | restore.e4 /dev/sda3
 Restoring partition /dev/sda3
 Reading header
 Bytes per block 4,096, 52,428,000 blocks
 Reading bitmap
-  4,244,566 blocks in use
+  1,707,113 blocks in use
 Restoring data blocks
-..................................................................................................................................
-4,244,566 blocks restored (17,385,742,336 bytes)
-Elapsed time 00:02:38
+.....................................................
+1,707,113 blocks restored (6,992,334,848 bytes)
+Elapsed time 0:01:16
+$ 
 ```
 
 ## Building from source
@@ -169,7 +185,7 @@ All of the examples were captured on a Raspberry Pi4B but should work on any Deb
 **backup.e4** relies on a few common packages that are usually pre-installed in your distribution. If not, Install them with:
 
 ```
-sudo apt install gcc git
+sudo apt install gcc git zlib1g-dev
 ```
 
 ### Build
@@ -184,7 +200,7 @@ Compile and link
 
 ```
 cd backup.e4
-make DEBUG=0
+make
 ```
 ### Install
 
