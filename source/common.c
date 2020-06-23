@@ -107,12 +107,12 @@ void part_close(void)
     close(part_fh);
 }
 
-static gzFile gz_fd = NULL;
+static gzFile dump_fd = NULL;
 
 static char* gz_error_str(void)
 {
     int eno;
-    char* emsg = (char*)gzerror(gz_fd, &eno);
+    char* emsg = (char*)gzerror(dump_fd, &eno);
     if (eno == Z_ERRNO)
         emsg = strerror(errno);
     return emsg;
@@ -122,16 +122,21 @@ void dump_open(uint32_t write)
 {
     assert((write == READ) || (write = WRITE));
 
+    int f_no;
     char mode[4];
     if (write == WRITE)
     {
         strcpy(mode, "wb0");
         mode[2] = compr_flag + '0';
+        f_no = STDOUT_FILENO;
     }
     else
+    {
         strcpy(mode, "rb");
-    gz_fd = gzdopen(fileno((write == WRITE) ? stdout : stdin), mode);
-    if (gz_fd == NULL)
+        f_no = STDIN_FILENO;
+    }
+    dump_fd = gzdopen(f_no, mode);
+    if (dump_fd == NULL)
         error("can't attach to %s\n", write ? "stdout" : "stdin");
 }
 
@@ -139,9 +144,9 @@ void dump_read(void* buffer, uint32_t size, char* emsg)
 {
     assert(buffer);
     assert(size);
-    assert(gz_fd);
+    assert(dump_fd);
 
-    if (gzread(gz_fd, buffer, size) != size)
+    if (gzread(dump_fd, buffer, size) != size)
         error("Can't read %s\n%s\n", emsg, gz_error_str());
 }
 
@@ -149,26 +154,26 @@ void dump_write(void* buffer, uint32_t size, char* emsg)
 {
     assert(buffer);
     assert(size);
-    assert(gz_fd);
+    assert(dump_fd);
 
-    if (gzwrite(gz_fd, buffer, size) != size)
+    if (gzwrite(dump_fd, buffer, size) != size)
         error("Can't write %s\n%s\n", emsg, gz_error_str());
 }
 
 int64_t dump_end(void)
 {
-    assert(gz_fd);
+    assert(dump_fd);
 
-    if (gzflush(gz_fd, Z_FINISH) != Z_OK)
+    if (gzflush(dump_fd, Z_FINISH) != Z_OK)
         error("Can't flush backup\n%s\n", gz_error_str());
-    return gzoffset(gz_fd);
+    return gzoffset(dump_fd);
 }
 
 void dump_close(void)
 {
-    assert(gz_fd);
+    assert(dump_fd);
 
-    if (gzclose(gz_fd) != Z_OK)
+    if (gzclose(dump_fd) != Z_OK)
         error("Can't close backup\n%s\n", gz_error_str());
 }
 
