@@ -165,7 +165,7 @@ void part_close(void);
 void dump_open(uint32_t write);
 void dump_read(void* buffer, uint32_t size, char* emsg);
 void dump_write(void* buffer, uint32_t size, char* emsg);
-uint64_t dump_end(void);
+int64_t dump_end(void);
 void dump_close(void);
 
 void* common_malloc(uint64_t size, char* emsg);

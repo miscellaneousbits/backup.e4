@@ -155,7 +155,7 @@ void dump_write(void* buffer, uint32_t size, char* emsg)
         error("Can't write %s\n%s\n", emsg, gz_error_str());
 }
 
-uint64_t dump_end(void)
+int64_t dump_end(void)
 {
     assert(gz_fd);
 
