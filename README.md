@@ -21,6 +21,7 @@ Want to support this open source project? [Please star it : )](https://github.co
 	* [Requirements](#requirements)
 	* [Build](#build)
 	* [Install](#install)
+* [Installing from release](#installing-from-release)
 * [Security alert](#security-alert)
 * [Integration build status](#integration-build-status)
 * [Verification](#verification)
@@ -214,6 +215,35 @@ By default this will install to /usr/local/bin. You can override this with:
 
 ```
 make install INSTALLDIR=~/bin
+```
+
+## Installing from release
+
+Backup.e4 and restore.e4 are in fact a single program, hence the single binary release executable.
+
+Install a release binary as follows:
+
+```
+$ # Retrieve the release binary
+$ wget https://github.com/miscellaneousbits/backup.e4/releases/download/release-2.0/raspios-buster-armv7l-backup.e4
+HTTP request sent, awaiting response... 302 Found
+HTTP request sent, awaiting response... 200 OK
+Length: 13796 (13K) [application/octet-stream]
+Saving to: ‘raspios-buster-armv7l-backup.e4’
+
+raspios-buster-armv7l-backup. 100%[=================================================>]  13.47K  --.-KB/s    in 0.001s  
+
+2020-06-22 22:14:18 (11.0 MB/s) - ‘raspios-buster-armv7l-backup.e4’ saved [13796/13796]
+
+$ # Rename the binary
+$ mv raspios-buster-aarch64-backup.e4 backup.e4
+$ # Make it executable
+$ chmod +x backup.e4
+$ # Copy it to the install directory
+$ sudo cp backup.e4/backup.e4 /usr/local/bin
+$ # Link the restore binary
+$ sudo ln -s /usr/local/bin/backup.e4 /usr/local/bin/restore.e4
+$ 
 ```
 
 ## Security alert
