@@ -11,7 +11,7 @@
 * Supports restore from stdin.
 * Can automatically compress and decompress backups.
 
-Want to support this open source project? [Please star it : )](https://github.com/miscellaneousbits/backup.e4)
+Want to support this open source project? Please star it.
 
 ## Table of Contents
 
