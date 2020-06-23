@@ -1,4 +1,4 @@
-# backup.e4 (bare metal backup/restore for est4 file systems)
+# backup.e4 (bare metal backup/restore for ext4 file systems)
 
 ![backup.e4](images/ext4.png)
 
