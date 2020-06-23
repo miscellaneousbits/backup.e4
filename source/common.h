@@ -168,4 +168,4 @@ void dump_write(void* buffer, uint32_t size, char* emsg);
 int64_t dump_end(void);
 void dump_close(void);
 
-void* common_malloc(uint64_t size, char* emsg);
+void* common_malloc(uint32_t size, char* emsg);

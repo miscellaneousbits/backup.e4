@@ -177,11 +177,11 @@ void dump_close(void)
         error("Can't close backup\n%s\n", gz_error_str());
 }
 
-void* common_malloc(uint64_t size, char* emsg)
+void* common_malloc(uint32_t size, char* emsg)
 {
     assert(size);
 
-    void* p = malloc((size_t)size);
+    void* p = malloc(size);
     if (p == NULL)
         error("Can't allocate memory for %s\n%s\n", emsg, strerror(errno));
     return p;
