@@ -17,7 +17,6 @@ jobs:
       run: make INTEGRATION=1 DEBUG=0
     - name: verify
       run: |
-        echo "*** Help ***"
         ./backup.e4
         ./restore.e4
         test/test 10M no
