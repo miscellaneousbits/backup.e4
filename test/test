@@ -17,3 +17,4 @@ sudo umount fs1 fs2
 sudo losetup -d $LOOP1
 sudo losetup -d $LOOP2
 rm restored.img test/$1.img test.bak
+rmdir fs1 fs2

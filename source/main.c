@@ -28,7 +28,7 @@ static char* prog = NULL;
 static void help(void)
 {
     print("\nVersion " BACKUP_E4_VERSION ". Compiled %s-endian " __DATE__
-          "\nLincensed under GPLv2.  Author Jean M. Cyr.\n\nUsage: ",
+          "\nLicensed under GPLv2.  Author Jean M. Cyr.\n\nUsage: ",
         L_ENDIAN ? "little" : "big");
     if (backup_flag)
         print(
@@ -105,13 +105,7 @@ int main(int ac, char* av[])
 
     time_t start_time = time(NULL);
 
-    if (backup_flag)
-    {
-        dump_flags_t flags = {compr_flag, force_flag};
-        dump(flags);
-    }
-    else
-        restore();
+    backup_flag ? dump(compr_flag, force_flag) : restore();
 
     part_close();
     dump_close();

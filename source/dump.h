@@ -20,14 +20,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 
-typedef struct
-{
-    uint32_t compr_flag : 4;
-    uint32_t force_flag : 1;
-
-} dump_flags_t;
-
-void dump(dump_flags_t flags);
+void dump(uint32_t compr_lvl, uint32_t force);
 
 typedef struct ext4_super_block_s
 {
