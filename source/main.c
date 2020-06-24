@@ -42,8 +42,8 @@ static void help(void)
     exit(0);
 }
 
-static const char* backup_name = STRING_PARM(BINB);
-static const char* restore_name = STRING_PARM(BINR);
+static const char* backup_name = STRING_DEFINE(BINB);
+static const char* restore_name = STRING_DEFINE(BINR);
 
 static void parse_args(int ac, char* av[])
 {
@@ -105,7 +105,13 @@ int main(int ac, char* av[])
 
     time_t start_time = time(NULL);
 
-    backup_flag ? dump() : restore();
+    if (backup_flag)
+    {
+        dump_flags_t flags = {compr_flag, force_flag};
+        dump(flags);
+    }
+    else
+        restore();
 
     part_close();
     dump_close();

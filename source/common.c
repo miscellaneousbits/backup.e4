@@ -49,7 +49,7 @@ void error(char* fmt, ...)
     exit(-1);
 }
 
-void part_open(uint32_t write)
+void part_open(uint32_t write, uint32_t force_flag)
 {
     assert((write == READ) || (write = WRITE));
 
@@ -118,7 +118,7 @@ static char* gz_error_str(void)
     return emsg;
 }
 
-void dump_open(uint32_t write)
+void dump_open(uint32_t write, uint32_t compr_flag)
 {
     assert((write == READ) || (write = WRITE));
 
