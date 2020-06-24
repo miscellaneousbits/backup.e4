@@ -22,7 +22,7 @@ void restore(void)
 {
     print("Restoring partition %s\n", part_fn);
 
-    dump_open(READ);
+    dump_open(READ, 0);
 
     print("Reading header\n");
 
@@ -52,7 +52,7 @@ void restore(void)
 
     print("  %'lld blocks in use\n", cnt);
 
-    part_open(WRITE);
+    part_open(WRITE, 0);
 
     print("Restoring data blocks\n");
 

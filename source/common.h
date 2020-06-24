@@ -37,7 +37,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #define BACKUP_MAGIC 0xe4bae4ba
 
 #define STRINGIZE(x) #x
-#define STRING_PARM(x) STRINGIZE(x)
+#define STRING_DEFINE(x) STRINGIZE(x)
 
 typedef struct ext4_dump_hdr_s
 {
@@ -45,13 +45,11 @@ typedef struct ext4_dump_hdr_s
     uint32_t block_size;
     uint32_t magic; /* 0xe4bae4ba */
     uint32_t version;
+
 } ext4_dump_hdr_t;
 
 typedef uint32_t bm_word_t;
 #define BM_WORD_BITS (sizeof(bm_word_t) * 8)
-
-extern uint8_t force_flag;
-extern uint8_t compr_flag;
 
 extern uint64_t block_count;
 extern char* part_fn;
@@ -155,14 +153,14 @@ void error(char* fmt, ...);
 #define READ 0
 #define WRITE 1
 
-void part_open(uint32_t write);
+void part_open(uint32_t write, uint32_t force_flag);
 void part_seek(uint64_t offset, char* emsg);
 void part_read(void* buffer, uint32_t size, char* emsg);
 void part_read_block(uint64_t block, char* emsg);
 void part_write_block(uint64_t block, char* emsg);
 void part_close(void);
 
-void dump_open(uint32_t write);
+void dump_open(uint32_t write, uint32_t compr_flag);
 void dump_read(void* buffer, uint32_t size, char* emsg);
 void dump_write(void* buffer, uint32_t size, char* emsg);
 int64_t dump_end(void);

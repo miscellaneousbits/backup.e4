@@ -129,8 +129,10 @@ static uint64_t load_block_group_bitmaps(void)
     return cnt;
 }
 
-static void save_backup(void)
+static void save_backup(uint32_t compr_flag)
 {
+    dump_open(WRITE, compr_flag);
+
     print("Writing header\n");
 
     hdr.blocks = le64_to_cpu(block_count);
@@ -171,14 +173,14 @@ static void save_backup(void)
     print(")\n");
 }
 
-void dump(void)
+void dump(dump_flags_t flags)
 {
     print("Backing up partition %s", part_fn);
-    if (compr_flag)
-        print(", with compression level %d", compr_flag);
+    if (flags.compr_flag)
+        print(", with compression level %d", flags.compr_flag);
     print("\n");
 
-    part_open(READ);
+    part_open(READ, flags.force_flag);
 
     load_superblock();
 
@@ -202,9 +204,7 @@ void dump(void)
 
     print("  %'lld blocks in use\n", cnt);
 
-    dump_open(WRITE);
-
-    save_backup();
+    save_backup(flags.compr_flag);
 
     free(blk);
     free(group_bm);
