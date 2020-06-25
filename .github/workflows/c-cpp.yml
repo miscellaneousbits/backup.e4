@@ -14,7 +14,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: make
-      run: make INTEGRATION=1 DEBUG=0
+      run: |
+        sudo apt-get install uuid-dev zlib1g-dev
+        make INTEGRATION=1 DEBUG=0
     - name: verify
       run: |
         ./backup.e4
