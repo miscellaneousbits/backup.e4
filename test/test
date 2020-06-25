@@ -4,17 +4,19 @@ gunzip -k test/$1.img.gz
 truncate -s $(stat --printf="%s" test/$1.img) restored.img
 cat test.bak | ./restore.e4 restored.img
 e2fsck -f -n restored.img
+[ $? != 0 ] && exit -1
 LOOP1=$(losetup -f)
 sudo losetup $LOOP1 test/$1.img
 LOOP2=$(losetup -f)
 sudo losetup $LOOP2 restored.img
-[ ! -d "fs1" ] && mkdir fs1
-[ ! -d "fs2" ] && mkdir fs2
+mkdir fs1 fs2
 sudo mount $LOOP1 fs1
 sudo mount $LOOP2 fs2
 sudo diff -qr --no-dereference fs1/ fs2/
+[ $? != 0 ] && exit -1
 sudo umount fs1 fs2
 sudo losetup -d $LOOP1
 sudo losetup -d $LOOP2
 rm restored.img test/$1.img test.bak
 rmdir fs1 fs2
+exit 0
