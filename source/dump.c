@@ -129,7 +129,7 @@ static uint64_t load_block_group_bitmaps(void)
     return cnt;
 }
 
-static void save_backup(uint32_t compr_flag)
+static void save_backup(uint32_t compr_flag, uint32_t uuid)
 {
     dump_open(WRITE, compr_flag);
 
@@ -156,6 +156,17 @@ static void save_backup(uint32_t compr_flag)
         if (get_bm_bit(part_bm, block))
         {
             part_read_block(block, "data block");
+            if (uuid && (block == first_block))
+            {
+                ext4_super_block_t* super =
+                    (void*)(blk + (first_block ? 0 : 1024));
+                char s_uuid[40];
+                uuid_unparse_lower(*((uuid_t*)super->s_uuid), s_uuid);
+                print("Old volume UUID changed from %s\n", s_uuid);
+                uuid_generate_random(super->s_uuid);
+                uuid_unparse_lower(*((uuid_t*)super->s_uuid), s_uuid);
+                print("  to %s\n", s_uuid);
+            }
             dump_write(blk, block_size, "block");
             if ((block_cnt++ & 32767) == 0)
                 print(".");
@@ -173,7 +184,7 @@ static void save_backup(uint32_t compr_flag)
     print(")\n");
 }
 
-void dump(uint32_t compr_lvl, uint32_t force)
+void dump(uint32_t compr_lvl, uint32_t force, uint32_t uuid)
 {
     print("Backing up partition %s", part_fn);
     if (compr_lvl)
@@ -204,7 +215,7 @@ void dump(uint32_t compr_lvl, uint32_t force)
 
     print("  %'lld blocks in use\n", cnt);
 
-    save_backup(compr_lvl);
+    save_backup(compr_lvl, uuid);
 
     free(blk);
     free(group_bm);

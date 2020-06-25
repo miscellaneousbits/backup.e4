@@ -19,8 +19,9 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "dump.h"
 #include "restore.h"
 
-uint8_t force_flag = 0;
-uint8_t compr_flag = 0;
+static uint8_t force_flag = 0;
+static uint8_t compr_flag = 0;
+static uint8_t uuid_flag = 0;
 
 static uint8_t backup_flag = 0;
 static char* prog = NULL;
@@ -32,9 +33,10 @@ static void help(void)
         L_ENDIAN ? "little" : "big");
     if (backup_flag)
         print(
-            "%s [-c 0-9] [-f] extfs_partition_path\n"
+            "%s [-c 0-9] [-f] [-v] extfs_partition_path\n"
             "    -c Compression level (0-none, 1-low, 9-high)\n"
-            "    -f Force backup of mounted file system (unsafe)",
+            "    -f Force backup of mounted file system (unsafe)\n"
+            "    -v Replace the volume UUID",
             prog);
     else
         print("%s extfs_partition_path", prog);
@@ -61,11 +63,14 @@ static void parse_args(int ac, char* av[])
 
     opterr = 0;
 
-    while ((c = getopt(ac, av, "c:f")) != -1)
+    while ((c = getopt(ac, av, "c:fv")) != -1)
         switch (c)
         {
         case 'f':
             force_flag = 1;
+            break;
+        case 'v':
+            uuid_flag = 1;
             break;
         case 'c':
             if ((strlen(optarg) != 1) || (optarg[0] < '0') || (optarg[0] > '9'))
@@ -105,7 +110,7 @@ int main(int ac, char* av[])
 
     time_t start_time = time(NULL);
 
-    backup_flag ? dump(compr_flag, force_flag) : restore();
+    backup_flag ? dump(compr_flag, force_flag, uuid_flag) : restore();
 
     part_close();
     dump_close();

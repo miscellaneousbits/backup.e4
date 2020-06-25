@@ -37,9 +37,10 @@ $ backup.e4
 Version 1.3-dev. Compiled little-endian Jun 22 2020
 Lincensed under GPLv2.  Author Jean M. Cyr.
 
-Usage: backup.e4 [-c 0-9] [-f] extfs_partition_path
+Usage: backup.e4 [-c 0-9] [-f] [-v] extfs_partition_path
     -c Compression level (0-none, 1-low, 9-high)
     -f Force backup of mounted file system (unsafe)
+    -v Replace the volume UUID
 
 $ restore.e4 
 
@@ -186,7 +187,7 @@ All of the examples were captured on a Raspberry Pi4B but should work on any Deb
 **backup.e4** relies on a few common packages that are usually pre-installed in your distribution. If not, Install them with:
 
 ```
-sudo apt install gcc git zlib1g-dev
+sudo apt install gcc git zlib1g-dev uuid-dev
 ```
 
 ### Build
